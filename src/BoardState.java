@@ -25,10 +25,18 @@ public class BoardState {
         }
     }
 
-    public void setPlayerLocation(int x, int y){
-        row = x-1;
-        column = y-1;
-        board[row][column] = Util.player;
+    public void setPlayerLocation(){
+        if(board[row][column] == Util.boxOnGoal){
+            board[row][column] = Util.playerOnGoal;
+        } else {
+            board[row][column] = Util.player;
+        }
+    }
+
+    public void setPlayerCoordinates(int x, int y){
+        row = x;
+        column = y;
+        setPlayerLocation();
     }
 
     public void setWalls(int[] walls){
@@ -68,12 +76,27 @@ public class BoardState {
         }
     }
 
-    public void updatePlayerPositionAfterMoving(){
+    private void updatePlayerPositionAfterMoving(byte direction){
         if(board[row][column] == Util.playerOnGoal){
             board[row][column] = Util.box;
         } else {
             board[row][column] = Util.empty;
         }
+        switch (direction){
+            case Util.up:
+                row--;
+                break;
+            case Util.down:
+                row++;
+                break;
+            case Util.right:
+                column++;
+                break;
+            case Util.left:
+                column--;
+                break;
+        }
+        setPlayerLocation();
     }
 
     public boolean move(byte direction){
@@ -109,26 +132,7 @@ public class BoardState {
             default:
                 return false;
         }
-        updatePlayerPositionAfterMoving();
-        switch (direction){
-            case Util.up:
-                row--;
-                break;
-            case Util.down:
-                row++;
-                break;
-            case Util.right:
-                column++;
-                break;
-            case Util.left:
-                column--;
-                break;
-        }
-        if(board[row][column] == Util.boxOnGoal){
-            board[row][column] = Util.playerOnGoal;
-        } else {
-            board[row][column] = Util.player;
-        }
+        updatePlayerPositionAfterMoving(direction);
         return true;
     }
 
@@ -165,5 +169,15 @@ public class BoardState {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    public void clone(BoardState state){
+        for(int i = 0; i < board.length; i++){
+            for(int j = 0; j < board[i].length; i++){
+                state.board[i][j] = board[i][j];
+            }
+        }
+        state.row = row;
+        state.column = column;
     }
 }

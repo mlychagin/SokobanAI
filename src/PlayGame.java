@@ -7,27 +7,22 @@ public class PlayGame {
         int[] nStorageLocations = {4, 2};
         int[] initLocal = {2, 2};
 
-        BoardState board = new BoardState(sizeV, sizeH);
-        board.setWalls(nWallSquares);
-        board.setBoxes(boxes);
-        board.setGoals(nStorageLocations);
-        board.setPlayerLocation(initLocal[0], initLocal[1]);
+        GameEngine engine = new GameEngine();
+        engine.initBoard(sizeV, sizeH, nWallSquares, boxes, nStorageLocations, initLocal[0], initLocal[1]);
 
-        GameEngine engine = new GameEngine(board);
-        System.out.println(engine.board.toString());
+        System.out.println(engine.root.toString());
 
         System.out.println("Up");
-        engine.board.move(Util.up);
-        System.out.println(engine.board.toString());
+        engine.root.move(Util.up);
+        System.out.println(engine.root.toString());
         System.out.println("Right");
-        engine.board.move(Util.right);
-        System.out.println(engine.board.toString());
+        engine.root.move(Util.right);
+        System.out.println(engine.root.toString());
         System.out.println("Left");
-        engine.board.move(Util.left);
-        System.out.println(engine.board.toString());
+        engine.root.move(Util.left);
+        System.out.println(engine.root.toString());
         System.out.println("Down");
-        engine.board.move(Util.down);
-        System.out.println(engine.board.toString());
-
+        engine.root.move(Util.down);
+        System.out.println(engine.root.toString());
     }
 }
