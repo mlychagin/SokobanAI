@@ -1,28 +1,33 @@
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
+
 public class PlayGame {
-    public static void main (String args[]){
-        int sizeH = 3;
-        int sizeV = 5;
-        int[] nWallSquares = {1, 1, 1, 2, 1, 3, 2, 1, 2, 3, 3, 1, 3, 3, 4, 1, 4, 3, 5, 1, 5, 2, 5, 3};
-        int[] boxes = {3, 2};
-        int[] nStorageLocations = {4, 2};
-        int[] initLocal = {2, 2};
-
-        GameEngine engine = new GameEngine();
-        engine.initBoard(sizeV, sizeH, nWallSquares, boxes, nStorageLocations, initLocal[0], initLocal[1]);
-
-        System.out.println(engine.root.toString());
-
-        System.out.println("Up");
-        engine.root.move(Util.up);
-        System.out.println(engine.root.toString());
-        System.out.println("Right");
-        engine.root.move(Util.right);
-        System.out.println(engine.root.toString());
-        System.out.println("Left");
-        engine.root.move(Util.left);
-        System.out.println(engine.root.toString());
-        System.out.println("Down");
-        engine.root.move(Util.down);
-        System.out.println(engine.root.toString());
+    public static void main (String args[]) throws FileNotFoundException {
+        ArrayList<String> inputMap = new ArrayList<String>();
+        Scanner inFile = new Scanner(new FileReader(args[0]));
+        while (inFile.hasNext()){
+            String line = inFile.nextLine();
+            if(line.length() == 0){
+                continue;
+            }
+            if(line.contains(";")){
+                GameEngine engine = new GameEngine();
+                engine.initBoard(inputMap);
+                BoardState copyBoard = engine.root.clone();
+                System.out.println(engine.root.toString());
+                ArrayList<Byte> solution = engine.findSolution();
+                for(int i = solution.size()-1; i >=0; i--){
+                    copyBoard.move(solution.get(i));
+                }
+                System.out.println(copyBoard);
+                System.out.println(Arrays.toString(solution.toArray()));
+                inputMap.clear();
+            } else {
+                inputMap.add(line);
+            }
+        }
     }
 }

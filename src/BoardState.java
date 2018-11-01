@@ -1,105 +1,76 @@
-public class BoardState {
-    private byte[][] board;
-    private int row;
-    private int column;
+import java.util.ArrayList;
+import java.util.Comparator;
 
-    public BoardState(int height, int width){
-        board = new byte[height][width];
-        for(int i = 0; i < height; i++){
-            for(int j = 0; j < width; j++){
-                board[i][j] = Util.empty;
-            }
-        }
+public class BoardState{
+    ArrayList<ArrayList<Byte>> board;
+    private int rowPos;
+    private int columnPos;
+
+    BoardState parent = null;
+    int totalMoves = 0;
+    ArrayList<Byte> movesFromParent;
+
+    public BoardState(){
+        board = new ArrayList<>();
+        movesFromParent = new ArrayList<>();
     }
 
-    public BoardState(byte[][] board){
-        this.board = board;
-        for(int i = 0; i < board.length; i++){
-            for(int j = 0; j < board[i].length; j++){
-                if(board[i][j] == 4){
-                    row = i;
-                    column = j;
-                    return;
-                }
-            }
-        }
-    }
-
-    public void setPlayerLocation(){
-        if(board[row][column] == Util.boxOnGoal){
-            board[row][column] = Util.playerOnGoal;
-        } else {
-            board[row][column] = Util.player;
-        }
+    public void updatePlayerLocation(){
+        setCoordinate(rowPos, columnPos, getCoordinate(rowPos, columnPos) == Util.goal ? Util.playerOnGoal : Util.player);
     }
 
     public void setPlayerCoordinates(int x, int y){
-        row = x;
-        column = y;
-        setPlayerLocation();
+        rowPos = x;
+        columnPos = y;
     }
 
-    public void setWalls(int[] walls){
-        for(int i = 0; i < walls.length; i += 2){
-            board[walls[i]-1][walls[i+1]-1] = Util.wall;
-        }
+    void setCoordinate(int x, int y, byte value){
+        board.get(x).set(y, value);
     }
 
-    public void setBoxes(int[] boxes){
-        for(int i = 0; i < boxes.length; i += 2){
-            board[boxes[i]-1][boxes[i+1]-1] = Util.box;
-        }
+    byte getCoordinate(int x, int y){
+        return board.get(x).get(y);
     }
 
-    public void setGoals(int[] goals){
-        for(int i = 0; i < goals.length; i += 2){
-            board[goals[i]-1][goals[i+1]-1] = Util.goal;
-        }
-    }
-
-    private boolean moveBox(int startRow, int startColumn, int endRow, int endColumn){
-        switch(board[endRow][endColumn]){
+    private boolean moveBox(int rowStart, int columnStart, int rowEnd, int columnEnd, byte direction){
+        //TODO detect if moving box results in unwinnable state
+        byte endSlot = getCoordinate(rowEnd, columnEnd);
+        boolean isStartBox = getCoordinate(rowStart, columnStart) == Util.box;
+        boolean isEndEmpty = getCoordinate(rowEnd, columnEnd) == Util.empty;
+        switch(endSlot){
             case Util.empty:
-                if(board[startRow][startColumn] == Util.box){
-                    board[startRow][startColumn] = Util.empty;
-                }
-                if(board[startRow][startColumn] == Util.boxOnGoal){
-                    board[startRow][startColumn] = Util.goal;
-                }
-                board[endRow][endColumn] = Util.box;
-                return true;
+                setCoordinate(rowStart, columnStart, isStartBox ? Util.empty : Util.goal);
+                setCoordinate(rowEnd, columnEnd, Util.box);
             case Util.goal:
-                board[endRow][endColumn] = Util.boxOnGoal;
-                return true;
+                break;
             default:
                 return false;
         }
+        setCoordinate(rowEnd, columnEnd, isEndEmpty ? Util.box : Util.boxOnGoal);
+        updatePlayerPositionAfterMoving(direction);
+        return true;
     }
 
     private void updatePlayerPositionAfterMoving(byte direction){
-        if(board[row][column] == Util.playerOnGoal){
-            board[row][column] = Util.box;
-        } else {
-            board[row][column] = Util.empty;
-        }
+        setCoordinate(rowPos, columnPos, getCoordinate(rowPos, columnPos) == Util.playerOnGoal ? Util.goal : Util.empty);
         switch (direction){
             case Util.up:
-                row--;
+                rowPos--;
                 break;
             case Util.down:
-                row++;
+                rowPos++;
                 break;
             case Util.right:
-                column++;
+                columnPos++;
                 break;
             case Util.left:
-                column--;
+                columnPos--;
                 break;
         }
-        setPlayerLocation();
+        updatePlayerLocation();
     }
 
-    public boolean move(byte direction){
+    public byte move(byte direction){
         byte offsetRow = 0;
         byte offsetColumn = 0;
         switch (direction){
@@ -116,68 +87,75 @@ public class BoardState {
                 offsetColumn = -1;
                 break;
         }
-        switch (board[row+offsetRow][column+offsetColumn]){
-            case Util.empty:
-                board[row+offsetRow][column+offsetColumn] = Util.player;
-                break;
+        switch (getCoordinate(rowPos + offsetRow, columnPos + offsetColumn)){
             case Util.box:
             case Util.boxOnGoal:
-                if(!moveBox(row+offsetRow, column+offsetColumn, row+offsetRow*2, column+offsetColumn*2)){
-                    return false;
-                }
-                break;
+                return moveBox(rowPos +offsetRow, columnPos +offsetColumn, rowPos +offsetRow*2, columnPos +offsetColumn*2, direction) ? Util.boxMove : Util.invalidMove;
+            case Util.empty:
             case Util.goal:
-                board[row+offsetRow][column+offsetColumn] = Util.playerOnGoal;
                 break;
             default:
-                return false;
+                return Util.invalidMove;
         }
         updatePlayerPositionAfterMoving(direction);
-        return true;
+        return Util.playerMove;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        for (byte[] row : board) {
+        for (ArrayList<Byte> row : board) {
             for (byte column : row) {
-                switch (column){
-                    case Util.empty:
-                        builder.append(" ");
-                        break;
-                    case Util.box:
-                        builder.append("$");
-                        break;
-                    case Util.goal:
-                        builder.append(".");
-                        break;
-                    case Util.boxOnGoal:
-                        builder.append("*");
-                        break;
-                    case Util.player:
-                        builder.append("@");
-                        break;
-                    case Util.playerOnGoal:
-                        builder.append("+");
-                        break;
-                    case Util.wall:
-                        builder.append("#");
-                        break;
-                }
-                builder.append(" ");
+                builder.append((char)column).append(" ");
             }
             builder.append("\n");
         }
         return builder.toString();
     }
 
-    public void clone(BoardState state){
-        for(int i = 0; i < board.length; i++){
-            for(int j = 0; j < board[i].length; i++){
-                state.board[i][j] = board[i][j];
-            }
+    public static class BoardStateCompare implements Comparator<BoardState> {
+        @Override
+        public int compare(BoardState o1, BoardState o2) {
+            return o1.totalMoves - o2.totalMoves;
         }
-        state.row = row;
-        state.column = column;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BoardState that = (BoardState) o;
+        return board.equals(that.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return board.hashCode();
+    }
+
+    public BoardState clone(){
+        //TODO: Pull newState from statePool
+        BoardState newState = Util.getBoard();
+        for(int i = 0; i < board.size(); i++){
+            ArrayList<Byte> row = board.get(i);
+            //TODO: Pull newRow from rowPool
+            ArrayList<Byte> newRow = new ArrayList<>();
+            newRow.addAll(row);
+            newState.board.add(newRow);
+        }
+        newState.rowPos = rowPos;
+        newState.columnPos = columnPos;
+        newState.parent = this;
+        return newState;
+    }
+
+    public void reset(){
+        //TODO recycle Arraylist<Byte>;
+        board.clear();
+        rowPos = 0;
+        columnPos = 0;
+        parent = null;
+        totalMoves = 0;
+        movesFromParent.clear();
     }
 }
