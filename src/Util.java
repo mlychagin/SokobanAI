@@ -19,6 +19,20 @@ public class Util {
     public static final byte wall = '#';
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
+    static LinkedList<Pair> pairPool = new LinkedList<>();
+
+    static void recycle(Pair pair){
+        pairPool.add(pair);
+    }
+
+    static Pair getPair(int x, int y){
+        if(!pairPool.isEmpty()){
+            Pair p = pairPool.poll();
+            p.set(x, y);
+            return p;
+        }
+        return new Pair(x, y);
+    }
 
     static void recycle(BoardState state){
         state.reset();
@@ -30,9 +44,5 @@ public class Util {
             return boardPool.poll();
         }
         return new BoardState();
-    }
-
-    public Util (){
-
     }
 }

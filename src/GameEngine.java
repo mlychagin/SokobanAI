@@ -1,11 +1,13 @@
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.PriorityQueue;
 
 public class GameEngine{
-    BoardState root;
-    ArrayList<Integer> goalNodes = new ArrayList();
+    private LinkedList<BoardState> priorityQue = new LinkedList<>();
+    private HashSet<BoardState> seenStates = new HashSet<>();
+    ArrayList<ArrayList<Byte>> board = new ArrayList<>();
+    static HashSet<Pair> goalNodes = new HashSet<>();
+    BoardState root = Util.getBoard();
 
     public GameEngine(){
     }
@@ -17,76 +19,89 @@ public class GameEngine{
             ArrayList<Byte> row = new ArrayList<Byte>();
             for(int j = 0; j < s.length(); j++){
                 byte slot = (byte)s.charAt(j);
-                if(slot == Util.player || slot == Util.playerOnGoal){
-                    root.setPlayerCoordinates(i,j);
+                switch (slot){
+                    case Util.box:
+                        root.addBoxLocation(i,j);
+                        slot = Util.empty;
+                        break;
+                    case Util.goal:
+                        goalNodes.add(Util.getPair(i, j));
+                        break;
+                    case Util.boxOnGoal:
+                        root.addBoxLocation(i,j);
+                        goalNodes.add(Util.getPair(i, j));
+                        slot = Util.goal;
+                        break;
+                    case Util.player:
+                        root.setPlayerCoordinates(i,j);
+                        slot = Util.empty;
+                        break;
+                    case Util.playerOnGoal:
+                        goalNodes.add(Util.getPair(i, j));
+                        root.setPlayerCoordinates(i,j);
+                        slot = Util.goal;
+                        break;
+                    default:
+                        break;
                 }
-                if(slot == Util.goal || slot == Util.playerOnGoal || slot == Util.boxOnGoal){
-                    goalNodes.add(i);
-                    goalNodes.add(j);
-                }
-                row.add((byte)s.charAt(j));
+                row.add(slot);
             }
-            root.board.add(row);
+            board.add(row);
         }
     }
 
     public ArrayList<Byte> findSolution(){
-        PriorityQueue<BoardState> queue = new PriorityQueue<>(11, new BoardState.BoardStateCompare());
-        queue.addAll(generatePossibleMoves(root));
-        while(queue.size() > 0){
-            BoardState state = queue.poll();
-            if(isFinished(state)){
-                return state.movesFromParent;
+        System.out.println(root.printBoard(board));
+        ArrayList<Byte> returnMoves = new ArrayList<>();
+        priorityQue.add(root);
+        seenStates.add(root);
+
+        BoardState state = root;
+        while(!priorityQue.isEmpty()){
+            state = priorityQue.removeFirst();
+            if(isGoalState(state)){
+                break;
             }
-            queue.addAll(generatePossibleMoves(state));
+            BoardState child = state.getChild();
+            for(byte i = Util.up; i <= Util.down; i++){
+                if(child.move(board, i)){
+                    if(!seenStates.contains(child)){
+                        child.moveFromParent = i;
+                        priorityQue.add(child);
+                        seenStates.add(child);
+                        //System.out.println(child.printBoard(board));
+                    } else {
+                        Util.recycle(child);
+                    }
+                    child = state.getChild();
+                }
+            }
+            Util.recycle(child);
         }
-        return null;
+        //System.out.println(state.printBoard(board));
+        while(state.parent != null){
+            returnMoves.add(state.moveFromParent);
+            state = state.parent;
+        }
+        for(BoardState b : seenStates){
+            Util.recycle(b);
+        }
+        seenStates.clear();
+        for(Pair p : goalNodes){
+            Util.recycle(p);
+        }
+        goalNodes.clear();
+        board.clear();
+        return returnMoves;
     }
 
-    private boolean isFinished(BoardState state){
-        for(int i = 0; i < goalNodes.size(); i+=2){
-            if(state.getCoordinate(goalNodes.get(i), goalNodes.get(i+1)) != Util.boxOnGoal){
+    public boolean isGoalState(BoardState boardState){
+        for(Pair p : boardState.boxPositions){
+            if(!goalNodes.contains(p)){
                 return false;
             }
         }
+        System.out.println("Finished");
         return true;
-    }
-
-    public ArrayList<BoardState> generatePossibleMoves(BoardState root){
-        ArrayList<BoardState> returnMoves = new ArrayList<>();
-        HashSet<BoardState> seenStates = new HashSet<>();
-        LinkedList<BoardState> priorityQue = new LinkedList<>();
-        seenStates.add(root);
-        priorityQue.add(root);
-
-        while(!priorityQue.isEmpty()){
-            BoardState state = priorityQue.removeFirst();
-            BoardState copyState = state.clone();
-            for(byte i = Util.up; i <= Util.down; i++){
-                byte result = copyState.move(i);
-                if(result == Util.playerMove){
-                    if(!seenStates.contains(copyState)){
-                        copyState.movesFromParent.add(i);
-                        seenStates.add(copyState);
-                        priorityQue.add(copyState);
-                    }
-                } else if(result == Util.boxMove){
-                    BoardState iterator = copyState.parent;
-                    copyState.movesFromParent.add(i);
-                    while(iterator != null){
-                        copyState.movesFromParent.addAll(iterator.movesFromParent);
-                        iterator = iterator.parent;
-                    }
-                    copyState.parent = null;
-                    copyState.totalMoves = copyState.movesFromParent.size();
-                    returnMoves.add(copyState);
-                } else {
-                    //TODO : Possibly Revert the move instead of copying all over again.
-                    Util.recycle(copyState);
-                }
-                copyState = state.clone();
-            }
-        }
-        return returnMoves;
     }
 }

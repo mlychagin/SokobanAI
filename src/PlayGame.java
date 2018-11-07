@@ -1,7 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class PlayGame {
@@ -14,16 +13,12 @@ public class PlayGame {
                 continue;
             }
             if(line.contains(";")){
+                System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                BoardState copyBoard = engine.root.clone();
-                System.out.println(engine.root.toString());
                 ArrayList<Byte> solution = engine.findSolution();
-                for(int i = solution.size()-1; i >=0; i--){
-                    copyBoard.move(solution.get(i));
-                }
-                System.out.println(copyBoard);
-                System.out.println(Arrays.toString(solution.toArray()));
+                //System.out.println(Arrays.toString(solution.toArray()));
+                System.out.println();
                 inputMap.clear();
             } else {
                 inputMap.add(line);
