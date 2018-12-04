@@ -185,6 +185,35 @@ public class GameEngine {
         }
     }
 
+    public BoardState findSolutionDFSHelper() {
+        System.out.print(root.printBoard(board));
+        priorityQue.add(root);
+        seenStates.add(root);
+
+        BoardState state;
+        while (true) {
+            state = priorityQue.removeLast();
+            ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
+            if (Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()) {
+                System.out.println("Leak in findSolutionBFSHelper");
+            }
+            for (int i = 0; i < possibleMoves.size(); i++) {
+                BoardState move = possibleMoves.get(i);
+                if (isGoalState(move)) {
+                    for (int j = i + 1; j < possibleMoves.size(); j++) {
+                        Util.recycle(possibleMoves.get(j));
+                    }
+                    return move;
+                }
+                if (!seenStates.contains(move)) {
+                    priorityQue.add(move);
+                    seenStates.add(move);
+                } else {
+                    Util.recycle(move);
+                }
+            }
+        }
+    }
     public void cleanUp() {
         for (BoardState b : priorityQue) {
             seenStates.remove(b);
