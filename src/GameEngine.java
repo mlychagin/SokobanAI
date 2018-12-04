@@ -203,7 +203,7 @@ public class GameEngine {
         board.clear();
     }
 
-    public ArrayList<Byte> findSolutionBFS() {
+    public ArrayList<Byte> findSolution(int searchType) {
         ArrayList<Byte> returnMoves = new ArrayList<>();
         BoardState goalState = findSolutionBFSHelper();
 
