@@ -70,8 +70,13 @@ public class GameEngine{
                 for(int j = 1; j < row.size()-1; j++)
                 {
 
-                    if(row.get(j) == Util.empty)
+                    if(row.get(j) == Util.empty )
                     {
+                        if(i == 3 && j == 2)
+                        {
+                            System.out.println("here");
+                            j = 2;
+                        }
                         if(isDeadLock(row,rowAbove,rowBelow,i,j))
                         {
                             row.set(j,Util.deadZone);
@@ -98,10 +103,10 @@ public class GameEngine{
        if( moveAble(below.get(columnIndex),above.get(columnIndex))) totalMoves++;
 
 //        check right to left
-        if(moveAble(row.get(columnIndex+1),below.get(columnIndex-1)))totalMoves++;
+        if(moveAble(row.get(columnIndex+1),row.get(columnIndex-1)))totalMoves++;
 
 //          check left to right
-        if(moveAble(row.get(columnIndex-1),below.get(columnIndex+1))) totalMoves++;
+        if(moveAble(row.get(columnIndex-1),row.get(columnIndex+1))) totalMoves++;
 
         if(totalMoves >= 1)
         {
