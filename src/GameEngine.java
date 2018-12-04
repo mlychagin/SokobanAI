@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.lang.Math;
 
 public class GameEngine {
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
@@ -73,6 +74,7 @@ public class GameEngine {
         }
         Util.recycle(p);
     }
+
 
     private boolean isDeadLock(ArrayList<Byte> row, ArrayList<Byte> above, ArrayList<Byte> below, int rowIndex, int columnIndex) {
         int totalMoves = 0;
@@ -153,9 +155,13 @@ public class GameEngine {
         System.out.print(root.printBoard(board));
         priorityQue.add(root);
         seenStates.add(root);
+        int depth = 0;
+        int depthRequirement = findInitDepthRequirement();
 
         BoardState state = null;
+        int counter =0;
         while (true) {
+            counter ++;
             switch (searchType) {
                 //TODO add default case
                 case Util.bfs:
@@ -164,6 +170,24 @@ public class GameEngine {
                 case Util.dfs:
                     state = priorityQue.removeLast();
                     break;
+
+                case Util.bAbs:
+                    if(depth == depthRequirement)
+                    {
+                        state = priorityQue.removeFirst();
+                        depth = findDepth(state);
+                        if(depth == depthRequirement)
+                        {
+                            depthRequirement = depthRequirement * depthRequirement;
+                        }
+
+                    }
+                    else
+                    {
+                        state = priorityQue.removeLast();
+                        depth ++;
+
+                    }
             }
             ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
             if (Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()) {
@@ -186,7 +210,59 @@ public class GameEngine {
             }
         }
     }
+    private int findDepth(BoardState state)
+    {
+        int depth = 0;
 
+        while(state.parent != null)
+        {
+            depth ++;
+            state = state.parent;
+        }
+        return depth;
+    }
+    private int findInitDepthRequirement()
+    {
+        int lastMax = 0;
+        for(int i = 0; i < board.size(); i++)
+        {
+            ArrayList<Byte>row = board.get(i);
+            lastMax = Math.max(row.size(),lastMax);
+        }
+        return lastMax * lastMax;
+    }
+    public BoardState findSolutionHelperIterative() {
+        System.out.print(root.printBoard(board));
+        priorityQue.add(root);
+        seenStates.add(root);
+
+
+        BoardState state = null;
+        int counter =0;
+        while (true) {
+            counter ++;
+
+            ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
+            if (Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()) {
+                System.out.println("Leak in findSolutionBFSHelper");
+            }
+            for (int i = 0; i < possibleMoves.size(); i++) {
+                BoardState move = possibleMoves.get(i);
+                if (isGoalState(move)) {
+                    for (int j = i + 1; j < possibleMoves.size(); j++) {
+                        Util.recycle(possibleMoves.get(j));
+                    }
+                    return move;
+                }
+                if (!seenStates.contains(move)) {
+                    priorityQue.add(move);
+                    seenStates.add(move);
+                } else {
+                    Util.recycle(move);
+                }
+            }
+        }
+    }
     public void cleanUp() {
         for (BoardState b : priorityQue) {
             seenStates.remove(b);
