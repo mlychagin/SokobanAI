@@ -119,7 +119,6 @@ public class BoardState {
     }
 
     public void loadPlayer(ArrayList<ArrayList<Byte>> board) {
-        byte coord = getCoordinate(board, sokoban);
         switch (getCoordinate(board, sokoban)) {
             case Util.empty:
                 setCoordinate(board, sokoban, Util.player);
@@ -193,8 +192,8 @@ public class BoardState {
         for (Pair p : boxPositions) {
             Util.recycle(p);
         }
-        boxPositions.clear();
         parent = null;
+        boxPositions.clear();
         movesFromParent.clear();
     }
 

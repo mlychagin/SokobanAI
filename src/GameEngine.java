@@ -58,11 +58,11 @@ public class GameEngine {
         while (keepGoing) {
             keepGoing = false;
             for (int i = 1; i < board.size() - 1; i++) {
-                ArrayList<Byte> rowAbove = board.get(i - 1);
                 ArrayList<Byte> row = board.get(i);
-                ArrayList<Byte> rowBelow = board.get(i + 1);
                 for (int j = 1; j < row.size() - 1; j++) {
                     if (row.get(j) == Util.empty) {
+                        ArrayList<Byte> rowAbove = board.get(i - 1);
+                        ArrayList<Byte> rowBelow = board.get(i + 1);
                         if (isDeadLock(row, rowAbove, rowBelow, i, j)) {
                             row.set(j, Util.deadZone);
                             keepGoing = true;
