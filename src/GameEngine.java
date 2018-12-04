@@ -78,8 +78,27 @@ public class GameEngine {
             return false;
         }
         int totalMoves = 0;
-        if (moveAble(above.get(columnIndex), below.get(columnIndex))) totalMoves++;
-        if (moveAble(below.get(columnIndex), above.get(columnIndex))) totalMoves++;
+        Byte aboveByte;
+        Byte belowByte;
+        if(columnIndex >= above.size())
+        {
+             aboveByte = Util.wall;
+        }
+        else
+        {
+            aboveByte = above.get(columnIndex);
+        }
+        if(columnIndex >= below.size())
+        {
+            belowByte = Util.wall;
+        }
+        else
+        {
+            belowByte = below.get(columnIndex);
+        }
+
+        if (moveAble(aboveByte, belowByte)) totalMoves++;
+        if (moveAble(belowByte, aboveByte)) totalMoves++;
         if (moveAble(row.get(columnIndex + 1), row.get(columnIndex - 1))) totalMoves++;
         if (moveAble(row.get(columnIndex - 1), row.get(columnIndex + 1))) totalMoves++;
         return totalMoves < 1;
