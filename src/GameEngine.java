@@ -171,7 +171,7 @@ public class GameEngine {
                     state = priorityQue.removeLast();
                     break;
 
-                case Util.bAbs:
+                case Util.ids:
                     if(depth == depthRequirement)
                     {
                         state = priorityQue.removeFirst();
