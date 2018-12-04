@@ -129,15 +129,18 @@ public class GameEngine{
 
         BoardState state;
         while(!intermediatePriorityQue.isEmpty()){
+            if(Util.getBoardStateCount() != Util.getBoardStateSize() + seenStates.size() + intermediateSeenStates.size() - 1){
+                System.out.println("Leak in findPossibleBoxMoves1");
+            }
             state = intermediatePriorityQue.removeFirst();
             BoardState child = state.getChild();
             for(byte i = Util.up; i <= Util.down; i++){
                 byte moveType = child.move(board, i);
+                if(moveType == Util.invalidMove){
+                    continue;
+                }
                 if(!intermediateSeenStates.contains(child)){
                     switch (moveType) {
-                        case Util.invalidMove :
-                            Util.recycle(child);
-                            break;
                         case Util.playerMove:
                             intermediatePriorityQue.add(child);
                             intermediateSeenStates.add(child);
@@ -163,6 +166,7 @@ public class GameEngine{
                 }
                 child = state.getChild();
             }
+            Util.recycle(child);
         }
         int beforeSize = Util.getBoardStateSize();
         for(BoardState b : intermediateSeenStates){
@@ -171,7 +175,7 @@ public class GameEngine{
             }
         }
         if(Util.getBoardStateSize() - beforeSize != intermediateSeenStates.size() - returnMoves.size() - 1){
-            System.out.println("Leak in findPossibleBoxMoves");
+            System.out.println("Leak in findPossibleBoxMoves2");
         }
         //TODO Pool Arraylist<BoardStates>
         intermediateSeenStates.clear();
@@ -183,16 +187,12 @@ public class GameEngine{
         priorityQue.add(root);
         seenStates.add(root);
 
-        int sizeB = Util.getBoardStateCount();
-        int actualB = Util.getBoardStateSize();
         BoardState state;
         while(true){
             state = priorityQue.removeFirst();
             ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
-            int size = Util.getBoardStateCount();
-            int actual = Util.getBoardStateSize();
             if(Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()){
-                System.out.println("Leak");
+                System.out.println("Leak in findSolutionBFSHelper");
             }
             for(int i = 0; i < possibleMoves.size(); i++){
                 BoardState move = possibleMoves.get(i);
@@ -213,7 +213,6 @@ public class GameEngine{
     }
 
     public void cleanUp(){
-
         for(BoardState b : priorityQue){
             seenStates.remove(b);
             Util.recycle(b);
@@ -228,18 +227,20 @@ public class GameEngine{
         priorityQue.clear();
         seenStates.clear();
         goalNodes.clear();
-        Util.recycle(root);
         board.clear();
     }
 
     public ArrayList<Byte> findSolutionBFS(){
         ArrayList<Byte> returnMoves = new ArrayList<>();
         BoardState goalState = findSolutionBFSHelper();
-        while(goalState != null){
-            returnMoves.addAll(goalState.movesFromParent);
-            goalState = goalState.parent;
+
+        BoardState iterState = goalState;
+        while(iterState != null){
+            returnMoves.addAll(iterState.movesFromParent);
+            iterState = iterState.parent;
         }
         cleanUp();
+        Util.recycle(goalState);
         return returnMoves;
     }
 

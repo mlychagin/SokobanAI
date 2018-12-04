@@ -50,9 +50,6 @@ public class PlayGame {
                 printSolution(solution);
                 System.out.println();
                 inputMap.clear();
-                int size = Util.getBoardStateCount();
-                int actual = Util.getBoardStateSize();
-                System.out.println();
             } else {
                 inputMap.add(line);
             }
