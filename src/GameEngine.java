@@ -88,9 +88,17 @@ public class GameEngine {
         {
             aboveByte = above.get(columnIndex);
         }
+        if(columnIndex >= below.size())
+        {
+            belowByte = Util.wall;
+        }
+        else
+        {
+            belowByte = below.get(columnIndex);
+        }
 
-        if (moveAble(aboveByte, below.get(columnIndex))) totalMoves++;
-        if (moveAble(below.get(columnIndex), aboveByte)) totalMoves++;
+        if (moveAble(aboveByte, belowByte)) totalMoves++;
+        if (moveAble(belowByte, aboveByte)) totalMoves++;
         if (moveAble(row.get(columnIndex + 1), row.get(columnIndex - 1))) totalMoves++;
         if (moveAble(row.get(columnIndex - 1), row.get(columnIndex + 1))) totalMoves++;
         return totalMoves < 1;
