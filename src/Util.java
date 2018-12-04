@@ -21,6 +21,22 @@ public class Util {
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
 
+    static int boardStateCount = 0;
+
+    static String byteToString(byte b){
+        switch (b) {
+            case up:
+                return "Up";
+            case left:
+                return "Left";
+            case right:
+                return "Right";
+            case down:
+                return "Down";
+        }
+        return "NULL";
+    }
+
     static void recycle(Pair pair){
         pairPool.add(pair);
     }
@@ -43,6 +59,15 @@ public class Util {
         if(!boardPool.isEmpty()){
             return boardPool.poll();
         }
+        boardStateCount++;
         return new BoardState();
+    }
+
+    static int getBoardStateCount(){
+        return boardStateCount;
+    }
+
+    static int getBoardStateSize(){
+        return boardPool.size();
     }
 }

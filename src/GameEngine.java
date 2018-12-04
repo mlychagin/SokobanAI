@@ -5,9 +5,11 @@ import java.util.LinkedList;
 public class GameEngine{
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
     private HashSet<BoardState> seenStates = new HashSet<>();
-    ArrayList<ArrayList<Byte>> board = new ArrayList<>();
+    private LinkedList<BoardState> intermediatePriorityQue = new LinkedList<>();
+    private HashSet<BoardState> intermediateSeenStates = new HashSet<>();
+    private ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashSet<Pair> goalNodes = new HashSet<>();
-    BoardState root = Util.getBoard();
+    private BoardState root;
 
     public GameEngine(){
     }
@@ -50,52 +52,128 @@ public class GameEngine{
         }
     }
 
-    public ArrayList<Byte> findSolution(){
-        System.out.println(root.printBoard(board));
-        ArrayList<Byte> returnMoves = new ArrayList<>();
+    public ArrayList<BoardState> findPossibleBoxMoves(BoardState startState){
+        ArrayList<BoardState> returnMoves = new ArrayList<>();
+        intermediatePriorityQue.add(startState);
+        intermediateSeenStates.add(startState);
+
+        BoardState state;
+        while(!intermediatePriorityQue.isEmpty()){
+            state = intermediatePriorityQue.removeFirst();
+            BoardState child = state.getChild();
+            for(byte i = Util.up; i <= Util.down; i++){
+                byte moveType = child.move(board, i);
+                if(!intermediateSeenStates.contains(child)){
+                    switch (moveType) {
+                        case Util.invalidMove :
+                            Util.recycle(child);
+                            break;
+                        case Util.playerMove:
+                            intermediatePriorityQue.add(child);
+                            intermediateSeenStates.add(child);
+                            break;
+                        case Util.boxMove:
+                            returnMoves.add(child);
+                            intermediateSeenStates.add(child);
+                            ArrayList<Byte> childMovesFromParent = child.movesFromParent;
+                            child = child.parent;
+                            while(!child.equals(startState)){
+                                childMovesFromParent.addAll(child.movesFromParent);
+                                child = child.parent;
+                            }
+                            returnMoves.get(returnMoves.size()-1).parent = startState;
+                            break;
+                        default:
+                            System.out.println("Incorrect Move");
+                            break;
+
+                    }
+                } else {
+                    Util.recycle(child);
+                }
+                child = state.getChild();
+            }
+        }
+        int beforeSize = Util.getBoardStateSize();
+        for(BoardState b : intermediateSeenStates){
+            if(!returnMoves.contains(b) && !b.equals(startState)){
+                Util.recycle(b);
+            }
+        }
+        if(Util.getBoardStateSize() - beforeSize != intermediateSeenStates.size() - returnMoves.size() - 1){
+            System.out.println("Leak in findPossibleBoxMoves");
+        }
+        //TODO Pool Arraylist<BoardStates>
+        intermediateSeenStates.clear();
+        return returnMoves;
+    }
+
+    public BoardState findSolutionBFSHelper(){
+        System.out.print(root.printBoard(board));
         priorityQue.add(root);
         seenStates.add(root);
 
-        BoardState state = root;
-        while(!priorityQue.isEmpty()){
+        int sizeB = Util.getBoardStateCount();
+        int actualB = Util.getBoardStateSize();
+        BoardState state;
+        while(true){
             state = priorityQue.removeFirst();
-            if(isGoalState(state)){
-                break;
+            ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
+            int size = Util.getBoardStateCount();
+            int actual = Util.getBoardStateSize();
+            if(Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()){
+                System.out.println("Leak");
             }
-            BoardState child = state.getChild();
-            for(byte i = Util.up; i <= Util.down; i++){
-                if(child.move(board, i)){
-                    if(!seenStates.contains(child)){
-                        child.moveFromParent = i;
-                        priorityQue.add(child);
-                        seenStates.add(child);
-                        //System.out.println(child.printBoard(board));
-                    } else {
-                        Util.recycle(child);
+            for(int i = 0; i < possibleMoves.size(); i++){
+                BoardState move = possibleMoves.get(i);
+                if(isGoalState(move)){
+                    for(int j = i + 1; j < possibleMoves.size(); j++){
+                        Util.recycle(possibleMoves.get(j));
                     }
-                    child = state.getChild();
+                    return move;
+                }
+                if(!seenStates.contains(move)){
+                    priorityQue.add(move);
+                    seenStates.add(move);
+                } else {
+                    Util.recycle(move);
                 }
             }
-            Util.recycle(child);
         }
-        //System.out.println(state.printBoard(board));
-        while(state.parent != null){
-            returnMoves.add(state.moveFromParent);
-            state = state.parent;
+    }
+
+    public void cleanUp(){
+
+        for(BoardState b : priorityQue){
+            seenStates.remove(b);
+            Util.recycle(b);
         }
         for(BoardState b : seenStates){
             Util.recycle(b);
         }
-        seenStates.clear();
         for(Pair p : goalNodes){
             Util.recycle(p);
+
         }
+        priorityQue.clear();
+        seenStates.clear();
         goalNodes.clear();
+        Util.recycle(root);
         board.clear();
+    }
+
+    public ArrayList<Byte> findSolutionBFS(){
+        ArrayList<Byte> returnMoves = new ArrayList<>();
+        BoardState goalState = findSolutionBFSHelper();
+        while(goalState != null){
+            returnMoves.addAll(goalState.movesFromParent);
+            goalState = goalState.parent;
+        }
+        cleanUp();
         return returnMoves;
     }
 
-    public boolean isGoalState(BoardState boardState){
+    private boolean isGoalState(BoardState boardState){
         for(Pair p : boardState.boxPositions){
             if(!goalNodes.contains(p)){
                 return false;

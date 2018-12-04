@@ -6,7 +6,7 @@ public class BoardState{
     Pair sokoban = Util.getPair(0,0);
 
     BoardState parent = null;
-    byte moveFromParent = 0;
+    ArrayList<Byte> movesFromParent = new ArrayList<>();
 
     public BoardState(){
     }
@@ -74,7 +74,7 @@ public class BoardState{
         return true;
     }
 
-    public boolean move(ArrayList<ArrayList<Byte>> board, byte direction){
+    public byte move(ArrayList<ArrayList<Byte>> board, byte direction){
         loadBoard(board);
         byte offsetRow = 0;
         byte offsetColumn = 0;
@@ -92,24 +92,27 @@ public class BoardState{
                 offsetColumn = -1;
                 break;
         }
-        boolean returnValue = false;
+        byte returnValue = Util.invalidMove;
         Pair location = Util.getPair(sokoban.getFirst() + offsetRow, sokoban.getSecond() + offsetColumn);
         switch (getCoordinate(board, location)){
             case Util.box:
             case Util.boxOnGoal:
                 if(moveBox(board, location, Util.getPair(location.getFirst() + offsetRow, location.getSecond() + offsetColumn))){
                     updatePlayerPositionAfterMoving(direction);
-                    returnValue = true;
+                    returnValue = Util.boxMove;
                 }
                 break;
             case Util.empty:
             case Util.goal:
                 updatePlayerPositionAfterMoving(direction);
-                returnValue =  true;
+                returnValue =  Util.playerMove;
                 break;
             default:
         }
         resetBoard(board);
+        if(returnValue != Util.invalidMove){
+            movesFromParent.add(direction);
+        }
         return returnValue;
     }
 
@@ -172,15 +175,16 @@ public class BoardState{
         }
         newState.sokoban.set(this.sokoban);
         newState.parent = this;
-        newState.moveFromParent = 0;
         return newState;
     }
 
     public void reset(){
-        //TODO Add recycle Collection of Pairs
+        for(Pair p : boxPositions){
+            Util.recycle(p);
+        }
         boxPositions.clear();
         parent = null;
-        moveFromParent = 0;
+        movesFromParent.clear();
     }
 
     @Override
