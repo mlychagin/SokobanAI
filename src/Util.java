@@ -17,6 +17,7 @@ public class Util {
     public static final byte player = '@';
     public static final byte playerOnGoal = '+';
     public static final byte wall = '#';
+    public static final byte deadZone = 'x';
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();

@@ -52,6 +52,76 @@ public class GameEngine{
         }
     }
 
+    public void setDeadPositions()
+    {
+        boolean keepGoing = true;
+
+        while(keepGoing)
+        {
+            keepGoing = false;
+//            Only want to look for deadlocks inside the board, meaning we can skip the top row and
+//            the bottom row.
+            for(int i = 1; i < board.size() - 1 ; i ++)
+            {
+                ArrayList<Byte> rowAbove = board.get(i-1);
+                ArrayList<Byte> row = board.get(i);
+                ArrayList<Byte> rowBelow = board.get(i+1);
+//                just need to check the internal positions
+                for(int j = 1; j < row.size()-1; j++)
+                {
+
+                    if(row.get(j) == Util.empty)
+                    {
+                        if(isDeadLock(row,rowAbove,rowBelow,i,j))
+                        {
+                            row.set(j,Util.deadZone);
+                            board.set(i,row);
+                            keepGoing = true;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    private boolean isDeadLock(ArrayList<Byte> row, ArrayList<Byte> above, ArrayList<Byte> below, int rowIndex, int columnIndex)
+    {
+//        goal Node can't be a deadlock as well.
+        if(goalNodes.contains(Util.getPair(rowIndex,columnIndex)))
+        {
+            return false;
+        }
+        int totalMoves = 0;
+//        check above to below
+       if(moveAble(above.get(columnIndex),below.get(columnIndex))) totalMoves++;
+//        check below to above
+       if( moveAble(below.get(columnIndex),above.get(columnIndex))) totalMoves++;
+
+//        check right to left
+        if(moveAble(row.get(columnIndex+1),below.get(columnIndex-1)))totalMoves++;
+
+//          check left to right
+        if(moveAble(row.get(columnIndex-1),below.get(columnIndex+1))) totalMoves++;
+
+        if(totalMoves >= 1)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean moveAble(Byte sokoban, Byte destinationOfBlock)
+    {
+        if(sokoban == Util.wall)
+        {
+            return false;
+        }
+        if(destinationOfBlock == Util.deadZone || destinationOfBlock == Util.wall)
+        {
+            return false;
+        }
+        return true;
+    }
     public ArrayList<BoardState> findPossibleBoxMoves(BoardState startState){
         ArrayList<BoardState> returnMoves = new ArrayList<>();
         intermediatePriorityQue.add(startState);

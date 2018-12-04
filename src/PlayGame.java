@@ -45,6 +45,7 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
+                engine.setDeadPositions();
                 ArrayList<Byte> solution = engine.findSolutionBFS();
                 printSolution(solution);
                 System.out.println();
