@@ -20,6 +20,11 @@ public class Util {
     public static final byte deadZone = 'x';
     public static final byte playerOnDeadZone = '!';
 
+
+    public static final int bfs = 0;
+    public static final int dfs = 1;
+    public static final int bAbs = 2;
+
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
 
