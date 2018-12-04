@@ -160,7 +160,7 @@ public class GameEngine {
         priorityQue.add(root);
         seenStates.add(root);
 
-        BoardState state;
+        BoardState state = null;
         while (true) {
             switch (searchType){
                 case Util.bfs:
