@@ -162,7 +162,8 @@ public class GameEngine {
 
         BoardState state = null;
         while (true) {
-            switch (searchType){
+            switch (searchType) {
+                //TODO add default case
                 case Util.bfs:
                     state = priorityQue.removeFirst();
                     break;
