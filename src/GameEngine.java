@@ -54,16 +54,16 @@ public class GameEngine {
     }
 
     public void setDeadPositions() {
+        Pair p = Util.getPair(0,0);
         boolean keepGoing = true;
         while (keepGoing) {
             keepGoing = false;
             for (int i = 1; i < board.size() - 1; i++) {
                 ArrayList<Byte> row = board.get(i);
                 for (int j = 1; j < row.size() - 1; j++) {
-                    if (row.get(j) == Util.empty) {
-                        ArrayList<Byte> rowAbove = board.get(i - 1);
-                        ArrayList<Byte> rowBelow = board.get(i + 1);
-                        if (isDeadLock(row, rowAbove, rowBelow, i, j)) {
+                    p.set(i,j);
+                    if (row.get(j) == Util.empty && !goalNodes.contains(p)) {
+                        if (isDeadLock(row, board.get(i - 1), board.get(i + 1), i, j)) {
                             row.set(j, Util.deadZone);
                             keepGoing = true;
                         }
@@ -71,32 +71,13 @@ public class GameEngine {
                 }
             }
         }
+        Util.recycle(p);
     }
 
     private boolean isDeadLock(ArrayList<Byte> row, ArrayList<Byte> above, ArrayList<Byte> below, int rowIndex, int columnIndex) {
-        if (goalNodes.contains(Util.getPair(rowIndex, columnIndex))) {
-            return false;
-        }
         int totalMoves = 0;
-        Byte aboveByte;
-        Byte belowByte;
-        if(columnIndex >= above.size())
-        {
-             aboveByte = Util.wall;
-        }
-        else
-        {
-            aboveByte = above.get(columnIndex);
-        }
-        if(columnIndex >= below.size())
-        {
-            belowByte = Util.wall;
-        }
-        else
-        {
-            belowByte = below.get(columnIndex);
-        }
-
+        Byte aboveByte = columnIndex >= above.size() ? Util.wall : above.get(columnIndex);
+        Byte belowByte = columnIndex >= below.size() ? Util.wall : below.get(columnIndex);
         if (moveAble(aboveByte, belowByte)) totalMoves++;
         if (moveAble(belowByte, aboveByte)) totalMoves++;
         if (moveAble(row.get(columnIndex + 1), row.get(columnIndex - 1))) totalMoves++;
