@@ -18,7 +18,7 @@ public class GameEngine {
         root = Util.getBoard();
         for (int i = 0; i < map.size(); i++) {
             String s = map.get(i);
-            ArrayList<Byte> row = new ArrayList<Byte>();
+            ArrayList<Byte> row = new ArrayList<>();
             for (int j = 0; j < s.length(); j++) {
                 byte slot = (byte) s.charAt(j);
                 switch (slot) {
@@ -86,13 +86,7 @@ public class GameEngine {
     }
 
     private boolean moveAble(Byte sokoban, Byte destinationOfBlock) {
-        if (sokoban == Util.wall) {
-            return false;
-        }
-        if (destinationOfBlock == Util.deadZone || destinationOfBlock == Util.wall) {
-            return false;
-        }
-        return true;
+        return destinationOfBlock != Util.deadZone && destinationOfBlock != Util.wall && sokoban != Util.wall;
     }
 
     public ArrayList<BoardState> findPossibleBoxMoves(BoardState startState) {
