@@ -5,25 +5,25 @@ import java.util.Collections;
 import java.util.Scanner;
 
 public class PlayGame {
-    public static void printSolution(ArrayList<Byte> solution){
+    public static void printSolution(ArrayList<Byte> solution) {
         Collections.reverse(solution);
         boolean first = true;
         System.out.print("[");
-        for(Byte b : solution){
-            if(!first){
+        for (Byte b : solution) {
+            if (!first) {
                 System.out.print(",");
             }
             switch (b) {
-                case Util.up :
+                case Util.up:
                     System.out.print("Up");
                     break;
-                case Util.left :
+                case Util.left:
                     System.out.print("Left");
                     break;
-                case Util.right :
+                case Util.right:
                     System.out.print("Right");
                     break;
-                case Util.down :
+                case Util.down:
                     System.out.print("Down");
             }
             first = false;
@@ -42,7 +42,6 @@ public class PlayGame {
         printSolution(solution);
         System.out.println();
         inputMap.clear();
-          
     }
 }
 

@@ -1,4 +1,4 @@
-public class Pair{
+public class Pair {
     int first;
     int second;
 
@@ -12,12 +12,12 @@ public class Pair{
         this.second = p.getSecond();
     }
 
-    public void set(Pair p){
+    public void set(Pair p) {
         first = p.first;
         second = p.second;
     }
 
-    public void set(int first, int second){
+    public void set(int first, int second) {
         this.first = first;
         this.second = second;
     }
@@ -38,8 +38,8 @@ public class Pair{
         return second;
     }
 
-    public Pair clonePair(){
-        return Util.getPair(first,second);
+    public Pair clonePair() {
+        return Util.getPair(first, second);
     }
 
     @Override

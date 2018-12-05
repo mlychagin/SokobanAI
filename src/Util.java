@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Util {
@@ -18,18 +19,18 @@ public class Util {
     public static final byte playerOnGoal = '+';
     public static final byte wall = '#';
     public static final byte deadZone = 'x';
+    public static final byte playerOnDeadZone = '!';
 
-
-    public static final int bfs = 0;
-    public static final int dfs = 1;
-    public static final int bAbs = 2;
+    public static final int bfs = 100;
+    public static final int dfs = 101;
+    public static final int ids = 102;
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
+    static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
+    static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
 
-    static int boardStateCount = 0;
-
-    static String byteToString(byte b){
+    static String byteToString(byte b) {
         switch (b) {
             case up:
                 return "Up";
@@ -43,12 +44,12 @@ public class Util {
         return "NULL";
     }
 
-    static void recycle(Pair pair){
+    static void recycle(Pair pair) {
         pairPool.add(pair);
     }
 
-    static Pair getPair(int x, int y){
-        if(!pairPool.isEmpty()){
+    static Pair getPair(int x, int y) {
+        if (!pairPool.isEmpty()) {
             Pair p = pairPool.poll();
             p.set(x, y);
             return p;
@@ -56,24 +57,39 @@ public class Util {
         return new Pair(x, y);
     }
 
-    static void recycle(BoardState state){
+    static void recycle(BoardState state) {
         state.reset();
         boardPool.add(state);
     }
 
-    static BoardState getBoard(){
-        if(!boardPool.isEmpty()){
+    static BoardState getBoard() {
+        if (!boardPool.isEmpty()) {
             return boardPool.poll();
         }
-        boardStateCount++;
         return new BoardState();
     }
 
-    static int getBoardStateCount(){
-        return boardStateCount;
+    static void recycleABS(ArrayList<BoardState> arrayBoard) {
+        arrayBoard.clear();
+        arrayBoardStatePool.add(arrayBoard);
     }
 
-    static int getBoardStateSize(){
-        return boardPool.size();
+    static ArrayList<BoardState> getArrayBoardState() {
+        if (!arrayBoardStatePool.isEmpty()) {
+            return arrayBoardStatePool.poll();
+        }
+        return new ArrayList<>();
+    }
+
+    static void recycleAB(ArrayList<Byte> arrayByte) {
+        arrayByte.clear();
+        arrayBytePool.add(arrayByte);
+    }
+
+    static ArrayList<Byte> getArrayByte() {
+        if (!arrayBytePool.isEmpty()) {
+            return arrayBytePool.poll();
+        }
+        return new ArrayList<>();
     }
 }
