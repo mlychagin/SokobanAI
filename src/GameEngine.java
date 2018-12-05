@@ -1,6 +1,10 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Scanner;
 
 public class GameEngine {
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
@@ -41,7 +45,7 @@ public class GameEngine {
                     case Util.playerOnGoal:
                         goalNodes.add(Util.getPair(i, j));
                         root.setPlayerCoordinates(i, j);
-                        slot = Util.goal;
+                        slot = Util.player;
                         break;
                     default:
                         break;
@@ -51,6 +55,79 @@ public class GameEngine {
             board.add(row);
         }
         setDeadPositions();
+    }
+    
+    public void initInputBoard() throws FileNotFoundException {
+        root = Util.getBoard();
+        int i = 0;
+        File input = null;
+        
+        Scanner inFile = new Scanner(new FileReader(input));
+        String line; 
+        
+        while(inFile.hasNextLine()){
+        	line = inFile.nextLine();
+            ArrayList<Byte> row = new ArrayList<Byte>();
+        	if(i == 0){
+        		int xSize = Character.getNumericValue(line.charAt(0));
+        		int ySize = Character.getNumericValue(line.charAt(1));
+        		BoardState.boardDim.setBoardDimensions(xSize, ySize);
+        		for(int k = 0; k < ySize; k++){
+        			for(int l = 0; l < xSize; l++){
+        				row.add(Util.empty);
+        			}
+        			board.add(row);
+        		}
+        	}else if(i == 1){
+        		//int numberOfWallSquares = line.charAt(0);
+        		for(int j = 1; j < line.length(); j++){
+        			int xCoor = Character.getNumericValue(line.charAt(j));
+        			j++;
+            		int yCoor = Character.getNumericValue(line.charAt(j));
+            		
+        			board.get(xCoor).set(yCoor,Util.wall);
+        		}
+        	}else if(i == 2){
+        		//int numberOfBoxes = line.charAt(0);
+        		for(int j = 1; j < line.length(); j++){
+        			int xCoor = Character.getNumericValue(line.charAt(j));
+        			j++;
+            		int yCoor = Character.getNumericValue(line.charAt(j));
+            		
+            		root.addBoxLocation(xCoor, yCoor);
+        			board.get(xCoor).set(yCoor,Util.box);
+        		}
+        	}else if(i == 3){
+        		//int numberOfGoals = line.charAt(0);
+        		for(int j = 1; j < line.length(); j++){
+        			int xCoor = Character.getNumericValue(line.charAt(j));
+        			j++;
+            		int yCoor = Character.getNumericValue(line.charAt(j));
+            		
+                    goalNodes.add(Util.getPair(xCoor, yCoor));
+            		//check for box
+            		if(board.get(xCoor).get(yCoor) == Util.box){
+            			board.get(xCoor).set(yCoor,Util.boxOnGoal);
+            		}else{
+            			board.get(xCoor).set(yCoor,Util.goal);
+            		}
+        		}
+        	}else if(i == 4){
+        		int xCoor = Character.getNumericValue(line.charAt(0));      	
+        		int yCoor = Character.getNumericValue(line.charAt(1));
+        		
+                root.setPlayerCoordinates(xCoor, yCoor);
+        		if(board.get(xCoor).get(yCoor) == Util.goal || 
+        				board.get(xCoor).get(yCoor) == Util.boxOnGoal){
+        			board.get(xCoor).set(yCoor,Util.playerOnGoal);
+        		}else{
+        			board.get(xCoor).set(yCoor,Util.player);
+        		}        	
+        	}
+        	i++;
+        }
+        setDeadPositions();
+        inFile.close();
     }
 
     public void setDeadPositions() {

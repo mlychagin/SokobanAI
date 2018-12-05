@@ -5,12 +5,28 @@ public class BoardState{
     ArrayList<Pair> boxPositions = new ArrayList<>();
     Pair sokoban = Util.getPair(0,0);
 
+    static BoardDimension boardDim;
     BoardState parent = null;
     ArrayList<Byte> movesFromParent = new ArrayList<>();
 
+    public class BoardDimension{
+    	
+    	Pair  boardDimension = Util.getPair(0, 0);
+    	
+    	Pair setBoardDimensions(int x, int y){
+        	boardDimension = Util.getPair(x, y);
+    		return boardDimension;
+        }
+        
+        Pair getBoardDimensions(){
+    		return boardDimension;	
+        }
+    }
+    
     public BoardState(){
     }
 
+    
     public void setPlayerCoordinates(int x, int y){
         sokoban.setFirst(x);
         sokoban.setSecond(y);
