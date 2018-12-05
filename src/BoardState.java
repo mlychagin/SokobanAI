@@ -41,6 +41,10 @@ public class BoardState {
         board.get(location.getFirst()).set(location.getSecond(), slot);
     }
 
+    public static void setCoordinate(ArrayList<ArrayList<Byte>> board, int x, int y, byte slot) {
+        board.get(x).set(y, slot);
+    }
+
     public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, Pair location) {
         return board.get(location.getFirst()).get(location.getSecond());
     }

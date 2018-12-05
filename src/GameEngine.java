@@ -22,6 +22,13 @@ public class GameEngine {
     public GameEngine() {
     }
 
+    public void setDeadlocks(){
+        System.out.println(root.printBoard(board));
+        setDeadPositions();
+        setWallPositionsOutside();
+        setDeadPositionsAlgo();
+    }
+
     public void initBoard(ArrayList<String> map) {
         root = Util.getBoard();
         for (int i = 0; i < map.size(); i++) {
@@ -58,84 +65,48 @@ public class GameEngine {
             }
             board.add(row);
         }
-        System.out.println(root.printBoard(board));
-        setDeadPositions();
-        setWallPositionsOutside();
-        setDeadPositionsAlgo();
+        setDeadlocks();
     }
-    
-    public void initInputBoard() throws FileNotFoundException {
-        root = Util.getBoard();
-        int i = 0;
-        //File input = new File("sokoban1.txt");
-        
-        //Scanner inFile = new Scanner(new FileReader(input));
-        Scanner inFile = new Scanner(new File("src/sokoban1.txt"));
-        
-        while(inFile.hasNextLine()){
-            Scanner word = new Scanner(inFile.nextLine());
-            
-        	if(i == 0){
-        		int xSize = Integer.parseInt(word.next());
-        		int ySize = Integer.parseInt(word.next());
-        		//BoardState.boardDim.setBoardDimensions(xSize, ySize);
 
-        		for(int k = 0; k < ySize; k++){
-        			ArrayList<Byte> row = new ArrayList<Byte>();
-        			for(int l = 0; l < xSize; l++){
-        				row.add(Util.empty);
-                		//board.get(k).set(l,Util.empty);
-        			}
-        			board.add(row);
-        		}
-        	}else if(i == 1){
-        		word.next(); //int numberOfWallSquares = Integer.parseInt(word.next());
-        		while(word.hasNext()){
-        			int yCoor = (Integer.parseInt(word.next())-1);
-            		int xCoor = (Integer.parseInt(word.next())-1);
-            		//System.out.println("setting wall at: " + yCoor + ", " + xCoor);
-            		
-        			board.get(yCoor).set(xCoor,Util.wall);
-        			//board[yCoor][xCoor] = Util.wall;
-        		}
-        	}else if(i == 2){
-        		//int numberOfBoxes = Integer.parseInt(word.next());
-        		word.next();
-        		while(word.hasNext()){
-        			int yCoor = (Integer.parseInt(word.next())-1);
-            		int xCoor = (Integer.parseInt(word.next())-1);
-            		
-            		root.addBoxLocation(xCoor, yCoor);
-        			//board.get(xCoor).set(yCoor,Util.box);
-        		}
-        	}else if(i == 3){
-        		//int numberOfGoals = Integer.parseInt(word.next());
-        		word.next();
-        		while(word.hasNext()){
-        			int yCoor = (Integer.parseInt(word.next())-1);
-            		int xCoor = (Integer.parseInt(word.next())-1);
-            		
-                    goalNodes.add(Util.getPair(xCoor, yCoor));
-                    if(board.get(xCoor).get(yCoor) == Util.box){
-                		board.get(xCoor).set(yCoor,Util.goal);
-                    }
-        		}
-        	}else if(i == 4){
-        		int yCoor = (Integer.parseInt(word.next())-1);
-        		int xCoor = (Integer.parseInt(word.next())-1);
-        		
-                root.setPlayerCoordinates(xCoor, yCoor);
-        		if(board.get(xCoor).get(yCoor) == Util.goal){
-        			board.get(xCoor).set(yCoor,Util.player);
-        		}        	
-        	}
-        	i++;
-        	word.close();
+    public void setBoardSize(String line){
+        Scanner word = new Scanner(line);
+        int xSize = Integer.parseInt(word.next());
+        int ySize = Integer.parseInt(word.next());
+        for(int k = 0; k < ySize; k++){
+            ArrayList<Byte> row = new ArrayList<>();
+            for(int l = 0; l < xSize; l++){
+                row.add(Util.empty);
+            }
+            board.add(row);
         }
-        setDeadPositions();
-        System.out.print(root.printBoard(board));
-        System.out.println();
-        inFile.close();
+    }
+
+    public void setWalls(String line){
+        Scanner word = new Scanner(line);
+        int nWalls = Integer.parseInt(word.next());
+        for(int i = 0; i < nWalls; i++){
+            int xCoor = (Integer.parseInt(word.next())-1);
+            int yCoor = (Integer.parseInt(word.next())-1);
+            BoardState.setCoordinate(board, xCoor, yCoor, Util.wall);
+        }
+    }
+
+    public void setBoxes(String line){
+        Scanner word = new Scanner(line);
+        int nBoxes = Integer.parseInt(word.next());
+        for(int i = 0; i < nBoxes; i++){
+            int xCoor = (Integer.parseInt(word.next())-1);
+            int yCoor = (Integer.parseInt(word.next())-1);
+            root.addBoxLocation(xCoor, yCoor);
+        }
+    }
+
+    public void setSokoban(String line){
+        Scanner word = new Scanner(line);
+        int xCoor = (Integer.parseInt(word.next())-1);
+        int yCoor = (Integer.parseInt(word.next())-1);
+        root.setPlayerCoordinates(xCoor, yCoor);
+        setDeadlocks();
     }
 
     public void setDeadPositions() {

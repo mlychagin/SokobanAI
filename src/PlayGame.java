@@ -1,6 +1,5 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.UTFDataFormatException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
@@ -33,37 +32,61 @@ public class PlayGame {
         Collections.reverse(solution);
     }
 
-    public static void main (String args[]) throws FileNotFoundException {
-        Util util = new Util();
-        ArrayList<String> inputMap = new ArrayList<String>();
-       
+    private static void statLeak(){
+        int countBP = Util.getCountBoardPool();
+        int sizeBP = Util.getSizeBoardPool();
+
+        int countPP = Util.getCountPairPool();
+        int sizePP = Util.getSizePairPool();
+
+        int countABSP = Util.getCountArrayBoardStatePool();
+        int sizeABSP = Util.getSizeArrayBoardStatePool();
+
+        int countABP = Util.getCountArrayBytePool();
+        int sizeABP = Util.getSizeArrayBytePool();
+        System.out.flush();
+        System.out.flush();
+    }
+
+    private static void parseProf(String args[]) throws FileNotFoundException {
+        Scanner inFile = new Scanner(new FileReader(args[0]));
         GameEngine engine = new GameEngine();
-        engine.initInputBoard();
+
+        engine.setBoardSize(inFile.nextLine());
+        engine.setWalls(inFile.nextLine());
+        engine.setBoxes(inFile.nextLine());
+        engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = engine.findSolution(Util.bfs);
         printSolution(solution);
-        System.out.println();
-        inputMap.clear();
+        Util.recycleAB(solution);
+        statLeak();
     }
-    
-}
 
-//Util util = new Util();
-//ArrayList<String> inputMap = new ArrayList<String>();
-//Scanner inFile = new Scanner(new FileReader(args[0]));
-//while (inFile.hasNext()){
-//    String line = inFile.nextLine();
-//    if(line.length() == 0){
-//        continue;
-//    }
-//    if(line.contains(";")){
-//        System.out.println(line);
-//        GameEngine engine = new GameEngine();
-//        engine.initBoard(inputMap);
-//        ArrayList<Byte> solution = engine.findSolution(Util.bfs);
-//        printSolution(solution);
-//        System.out.println();
-//        inputMap.clear();
-//    } else {
-//        inputMap.add(line);
-//    }
-//}
+    public static void parseFile(String args[]) throws FileNotFoundException {
+        ArrayList<String> inputMap = new ArrayList<>();
+        Scanner inFile = new Scanner(new FileReader(args[0]));
+        while (inFile.hasNext()) {
+            String line = inFile.nextLine();
+            if (line.length() == 0) {
+                continue;
+            }
+            if (line.contains(";")) {
+                System.out.println(line);
+                GameEngine engine = new GameEngine();
+                engine.initBoard(inputMap);
+                ArrayList<Byte> solution = engine.findSolution(Util.bfs);
+                printSolution(solution);
+                Util.recycleAB(solution);
+                statLeak();
+                inputMap.clear();
+            } else {
+                inputMap.add(line);
+            }
+        }
+    }
+
+    public static void main (String args[]) throws FileNotFoundException {
+        //parseFile(args);
+        parseProf(args);
+    }
+}
