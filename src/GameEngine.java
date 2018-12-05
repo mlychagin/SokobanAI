@@ -79,54 +79,50 @@ public class GameEngine {
         			board.add(row);
         		}
         	}else if(i == 1){
-        		word.hasNext(); //int numberOfWallSquares = Integer.parseInt(word.next());
+        		word.next(); //int numberOfWallSquares = Integer.parseInt(word.next());
         		while(word.hasNext()){
-        			int xCoor = Integer.parseInt(word.next());
-            		int yCoor = Integer.parseInt(word.next());
+        			int yCoor = (Integer.parseInt(word.next())-1);
+            		int xCoor = (Integer.parseInt(word.next())-1);
             		
-        			board.get(xCoor).set(yCoor,Util.wall);
+        			board.get(yCoor).set(xCoor,Util.wall);
         		}
         	}else if(i == 2){
         		//int numberOfBoxes = Integer.parseInt(word.next());
-        		word.hasNext();
+        		word.next();
         		while(word.hasNext()){
-        			int xCoor = Integer.parseInt(word.next());
-            		int yCoor = Integer.parseInt(word.next());
+        			int yCoor = (Integer.parseInt(word.next())-1);
+            		int xCoor = (Integer.parseInt(word.next())-1);
             		
             		root.addBoxLocation(xCoor, yCoor);
-        			board.get(xCoor).set(yCoor,Util.box);
+        			//board.get(xCoor).set(yCoor,Util.box);
         		}
         	}else if(i == 3){
         		//int numberOfGoals = Integer.parseInt(word.next());
         		word.next();
         		while(word.hasNext()){
-        			int xCoor = Integer.parseInt(word.next());
-            		int yCoor = Integer.parseInt(word.next());
+        			int yCoor = (Integer.parseInt(word.next())-1);
+            		int xCoor = (Integer.parseInt(word.next())-1);
             		
                     goalNodes.add(Util.getPair(xCoor, yCoor));
-            		//check for box
-            		if(board.get(xCoor).get(yCoor) == Util.box){
-            			board.get(xCoor).set(yCoor,Util.boxOnGoal);
-            		}else{
-            			board.get(xCoor).set(yCoor,Util.goal);
-            		}
+            		board.get(xCoor).set(yCoor,Util.goal);
         		}
         	}else if(i == 4){
-        		int xCoor = Integer.parseInt(word.next());     	
-        		int yCoor = Integer.parseInt(word.next());
+        		int yCoor = (Integer.parseInt(word.next())-1);
+        		int xCoor = (Integer.parseInt(word.next())-1);
         		
-                root.setPlayerCoordinates(xCoor, yCoor);
-        		if(board.get(xCoor).get(yCoor) == Util.goal || 
-        				board.get(xCoor).get(yCoor) == Util.boxOnGoal){
-        			board.get(xCoor).set(yCoor,Util.playerOnGoal);
-        		}else{
+                //root.setPlayerCoordinates(xCoor, yCoor);
+        		if(board.get(xCoor).get(yCoor) == Util.goal){
         			board.get(xCoor).set(yCoor,Util.player);
         		}        	
         	}
         	i++;
         	word.close();
+            System.out.println(root.printBoard(board));
+
         }
         setDeadPositions();
+        System.out.print(root.printBoard(board));
+        System.out.println();
         inFile.close();
     }
 
