@@ -203,14 +203,24 @@ public class GameEngine {
     }
 
     public BoardState findSolutionHelper(BoardState startingState, int searchType) {
-        priorityQue.add(startingState);
+        switch (searchType){
+            case Util.bfs:
+            case Util.dfs:
+            case Util.ids:
+                priorityQue.add(startingState);
+                break;
+            case Util.huerisitc:
+                priorityQueueForHeuristic.add(new PairBoardState(0, startingState));
+                break;
+        }
         seenStates.add(startingState);
         int depth = 0;
         int depthRequirement = findInitDepthRequirement();
 
         BoardState state = null;
         while (true) {
-            if (priorityQue.size() == 0) return null;
+            if(searchType == Util.huerisitc && priorityQueueForHeuristic.isEmpty()) return null;
+            if(searchType != Util.huerisitc && priorityQue.isEmpty()) return null;
             switch (searchType) {
                 case Util.bfs:
                     state = priorityQue.removeFirst();
@@ -231,6 +241,9 @@ public class GameEngine {
 
                     }
                     break;
+                case Util.huerisitc:
+                    state = priorityQueueForHeuristic.remove().getBoardState();
+                    break;
                 default:
                     System.out.println("Invalid searchType");
             }
@@ -246,7 +259,14 @@ public class GameEngine {
                     return move;
                 }
                 if (!seenStates.contains(move)) {
-                    priorityQue.add(move);
+                    if(searchType == Util.huerisitc){
+                        int heuristic = 0;
+//                    calculate heuristic
+                        PairBoardState boardPair = new PairBoardState(heuristic, move);
+                        priorityQueueForHeuristic.add(boardPair);
+                    } else {
+                        priorityQue.add(move);
+                    }
                     seenStates.add(move);
                 } else {
                     Util.recycle(move);
@@ -271,41 +291,6 @@ public class GameEngine {
             lastMax = Math.max(row.size(), lastMax);
         }
         return lastMax * lastMax;
-    }
-
-    public BoardState findSolutionHelperHeuristic() {
-        System.out.print(root.printBoard(board));
-        PairBoardState forRoot = new PairBoardState(0, root);
-        priorityQueueForHeuristic.add(forRoot);
-        seenStates.add(root);
-
-
-        BoardState state = null;
-        int counter = 0;
-        while (true) {
-            counter++;
-            state = priorityQueueForHeuristic.remove().getBoardState();
-            ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
-            findPossibleBoxMoves(state, possibleMoves, null);
-            for (int i = 0; i < possibleMoves.size(); i++) {
-                BoardState move = possibleMoves.get(i);
-                if (isGoalState(move)) {
-                    for (int j = i + 1; j < possibleMoves.size(); j++) {
-                        Util.recycle(possibleMoves.get(j));
-                    }
-                    return move;
-                }
-                if (!seenStates.contains(move)) {
-                    int heuristic = 0;
-//                    calculate heuristic
-                    PairBoardState boardPair = new PairBoardState(heuristic, move);
-                    priorityQueueForHeuristic.add(boardPair);
-                    seenStates.add(move);
-                } else {
-                    Util.recycle(move);
-                }
-            }
-        }
     }
 
     public void cleanUpReset() {

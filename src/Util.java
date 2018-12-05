@@ -24,6 +24,7 @@ public class Util {
     public static final int bfs = 100;
     public static final int dfs = 101;
     public static final int ids = 102;
+    public static final int huerisitc = 103;
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
