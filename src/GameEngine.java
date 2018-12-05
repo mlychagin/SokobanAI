@@ -130,8 +130,6 @@ public class GameEngine {
         	}
         	i++;
         	word.close();
-            System.out.println(root.printBoard(board));
-
         }
         setDeadPositions();
         System.out.print(root.printBoard(board));

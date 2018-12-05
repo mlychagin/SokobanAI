@@ -5,6 +5,9 @@ public class BoardState {
     ArrayList<Pair> boxPositions = new ArrayList<>();
     Pair sokoban = Util.getPair(0, 0);
     
+    BoardState parent = null;
+    ArrayList<Byte> movesFromParent = Util.getArrayByte();
+    
     public BoardState(){
     }
 
