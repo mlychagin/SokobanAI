@@ -37,7 +37,7 @@ public class BoardState {
         }
     }
 
-    private void setCoordinate(ArrayList<ArrayList<Byte>> board, Pair location, byte slot) {
+    public static void setCoordinate(ArrayList<ArrayList<Byte>> board, Pair location, byte slot) {
         board.get(location.getFirst()).set(location.getSecond(), slot);
     }
 
@@ -54,8 +54,11 @@ public class BoardState {
     }
 
     private void loadBoard(ArrayList<ArrayList<Byte>> board) {
+        for(Pair location : GameEngine.goalNodes){
+            setCoordinate(board, location, Util.goal);
+        }
         for (Pair location : boxPositions) {
-            setCoordinate(board, location, GameEngine.goalNodes.contains(location) ? Util.boxOnGoal : Util.box);
+            setCoordinate(board, location, getCoordinate(board, location) == Util.goal ? Util.boxOnGoal : Util.box);
         }
     }
 
@@ -63,9 +66,13 @@ public class BoardState {
         for (Pair location : boxPositions) {
             setCoordinate(board, location, Util.empty);
         }
+        for (Pair location : GameEngine.goalNodes) {
+            setCoordinate(board, location, Util.empty);
+        }
     }
 
     private boolean moveBoxExtraHelper(ArrayList<ArrayList<Byte>> board, Pair startLocation, Pair endLocation, byte direction){
+        //TODO Refactor
         switch (direction) {
             case Util.up:
             case Util.down:
