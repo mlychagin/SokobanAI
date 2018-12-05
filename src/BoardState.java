@@ -41,15 +41,15 @@ public class BoardState {
         board.get(location.getFirst()).set(location.getSecond(), slot);
     }
 
-    private byte getCoordinate(ArrayList<ArrayList<Byte>> board, Pair location) {
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, Pair location) {
         return board.get(location.getFirst()).get(location.getSecond());
     }
 
-    private byte getCoordinate(ArrayList<ArrayList<Byte>> board, int x, int y) {
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, int x, int y) {
         return board.get(x).get(y);
     }
 
-    private byte getCoordinate(ArrayList<ArrayList<Byte>> board,  Pair location, int offsetRow, int offsetColumn) {
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board,  Pair location, int offsetRow, int offsetColumn) {
         return board.get(location.getFirst() + offsetRow).get(location.getSecond() + offsetColumn);
     }
 
@@ -72,23 +72,26 @@ public class BoardState {
     }
 
     private boolean moveBoxExtraHelper(ArrayList<ArrayList<Byte>> board, Pair startLocation, Pair endLocation, byte direction){
-        //TODO Refactor
+        byte ud1 = getCoordinate(board, startLocation, 0, 1);
+        byte ud2 = getCoordinate(board, startLocation, 0, -1);
+        byte ud3 = getCoordinate(board, endLocation, 0 ,1);
+        byte ud4 = getCoordinate(board, endLocation, 0, -1);
+
+        byte lr1 = getCoordinate(board, startLocation, 1, 0);
+        byte lr2 = getCoordinate(board, startLocation, -1, 0);
+        byte lr3 = getCoordinate(board, endLocation, 1 ,0);
+        byte lr4 = getCoordinate(board, endLocation, -1, 0);
+
         switch (direction) {
             case Util.up:
             case Util.down:
-                if (!(getCoordinate(board, startLocation, 0, 1) == Util.wall && getCoordinate(board, startLocation, 0, -1) == Util.wall)) {
-                    return false;
-                }
-                if (!(getCoordinate(board, endLocation, 0 ,1) == Util.wall && getCoordinate(board, endLocation, 0, -1) == Util.wall)) {
+                if (!((ud1 == Util.wall || ud1 == Util.deadZone) && (ud2 == Util.wall || ud2 == Util.deadZone) && (ud3 == Util.wall || ud3 == Util.deadZone) && (ud4 == Util.wall || ud4 == Util.deadZone))) {
                     return false;
                 }
                 break;
             case Util.left:
             case Util.right:
-                if (!(getCoordinate(board, startLocation.getFirst() + 1, startLocation.getSecond()) == Util.wall && getCoordinate(board, startLocation.getFirst() - 1, startLocation.getSecond()) == Util.wall)) {
-                    return false;
-                }
-                if (!(getCoordinate(board, endLocation.getFirst() + 1, endLocation.getSecond()) == Util.wall && getCoordinate(board, endLocation.getFirst() - 1, endLocation.getSecond()) == Util.wall)) {
+                if (!((lr1 == Util.wall || lr1 == Util.deadZone) && (lr2 == Util.wall || lr2 == Util.deadZone) && (lr3 == Util.wall || lr3 == Util.deadZone) && (lr4 == Util.wall || lr4 == Util.deadZone))) {
                     return false;
                 }
                 break;
@@ -104,7 +107,7 @@ public class BoardState {
         }
     }
 
-    private int getOffsetRow(byte direction){
+    public static int getOffsetRow(byte direction){
         switch (direction) {
             case Util.up:
                 return -1;
@@ -119,7 +122,7 @@ public class BoardState {
         return 0;
     }
 
-    private int getOffsetColumn(byte direction){
+    public static int getOffsetColumn(byte direction){
         switch (direction) {
             case Util.up:
             case Util.down:

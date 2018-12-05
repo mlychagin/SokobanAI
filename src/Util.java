@@ -30,6 +30,11 @@ public class Util {
     static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
     static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
 
+    static int countBoardPool = 0;
+    static int countPairPool = 0;
+    static int countArrayBoardStatePool = 0;
+    static int countArrayBytePool = 0;
+
     static String byteToString(byte b) {
         switch (b) {
             case up:
@@ -54,6 +59,7 @@ public class Util {
             p.set(x, y);
             return p;
         }
+        countPairPool++;
         return new Pair(x, y);
     }
 
@@ -66,6 +72,7 @@ public class Util {
         if (!boardPool.isEmpty()) {
             return boardPool.poll();
         }
+        countBoardPool++;
         return new BoardState();
     }
 
@@ -78,6 +85,7 @@ public class Util {
         if (!arrayBoardStatePool.isEmpty()) {
             return arrayBoardStatePool.poll();
         }
+        countArrayBoardStatePool++;
         return new ArrayList<>();
     }
 
@@ -90,6 +98,39 @@ public class Util {
         if (!arrayBytePool.isEmpty()) {
             return arrayBytePool.poll();
         }
+        countArrayBytePool++;
         return new ArrayList<>();
+    }
+
+    static int getCountBoardPool(){
+        return countBoardPool;
+    }
+
+    static int getCountPairPool(){
+        return countPairPool;
+    }
+
+    static int getCountArrayBoardStatePool(){
+        return countArrayBoardStatePool;
+    }
+
+    static int getCountArrayBytePool(){
+        return countArrayBytePool;
+    }
+
+    static int getSizeBoardPool(){
+        return boardPool.size();
+    }
+
+    static int getSizePairPool(){
+        return pairPool.size();
+    }
+
+    static int getSizeArrayBoardStatePool(){
+        return arrayBoardStatePool.size();
+    }
+
+    static int getSizeArrayBytePool(){
+        return arrayBytePool.size();
     }
 }
