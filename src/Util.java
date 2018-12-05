@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Util {
@@ -26,8 +27,8 @@ public class Util {
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
-
-    static int boardStateCount = 0;
+    static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
+    static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
 
     static String byteToString(byte b) {
         switch (b) {
@@ -65,15 +66,30 @@ public class Util {
         if (!boardPool.isEmpty()) {
             return boardPool.poll();
         }
-        boardStateCount++;
         return new BoardState();
     }
 
-    static int getBoardStateCount() {
-        return boardStateCount;
+    static void recycleABS(ArrayList<BoardState> arrayBoard) {
+        arrayBoard.clear();
+        arrayBoardStatePool.add(arrayBoard);
     }
 
-    static int getBoardStateSize() {
-        return boardPool.size();
+    static ArrayList<BoardState> getArrayBoardState() {
+        if (!arrayBoardStatePool.isEmpty()) {
+            return arrayBoardStatePool.poll();
+        }
+        return new ArrayList<>();
+    }
+
+    static void recycleAB(ArrayList<Byte> arrayByte) {
+        arrayByte.clear();
+        arrayBytePool.add(arrayByte);
+    }
+
+    static ArrayList<Byte> getArrayByte() {
+        if (!arrayBytePool.isEmpty()) {
+            return arrayBytePool.poll();
+        }
+        return new ArrayList<>();
     }
 }

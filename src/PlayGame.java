@@ -33,7 +33,7 @@ public class PlayGame {
     }
 
     public static void main(String args[]) throws FileNotFoundException {
-        ArrayList<String> inputMap = new ArrayList<String>();
+        ArrayList<String> inputMap = new ArrayList<>();
         Scanner inFile = new Scanner(new FileReader(args[0]));
         while (inFile.hasNext()) {
             String line = inFile.nextLine();
@@ -44,9 +44,9 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                ArrayList<Byte> solution = engine.findSolution(Util.bfs);
+                ArrayList<Byte> solution = engine.findSolution(Util.dfs);
                 printSolution(solution);
-                System.out.println();
+                Util.recycleAB(solution);
                 inputMap.clear();
             } else {
                 inputMap.add(line);

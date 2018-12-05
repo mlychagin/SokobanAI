@@ -18,7 +18,7 @@ public class GameEngine {
         root = Util.getBoard();
         for (int i = 0; i < map.size(); i++) {
             String s = map.get(i);
-            ArrayList<Byte> row = new ArrayList<>();
+            ArrayList<Byte> row = Util.getArrayByte();
             for (int j = 0; j < s.length(); j++) {
                 byte slot = (byte) s.charAt(j);
                 switch (slot) {
@@ -63,7 +63,7 @@ public class GameEngine {
                 for (int j = 1; j < row.size() - 1; j++) {
                     p.set(i,j);
                     if (row.get(j) == Util.empty && !goalNodes.contains(p)) {
-                        if (isDeadLock(row, board.get(i - 1), board.get(i + 1), i, j)) {
+                        if (isDeadLock(row, board.get(i - 1), board.get(i + 1), j)) {
                             row.set(j, Util.deadZone);
                             keepGoing = true;
                         }
@@ -74,7 +74,7 @@ public class GameEngine {
         Util.recycle(p);
     }
 
-    private boolean isDeadLock(ArrayList<Byte> row, ArrayList<Byte> above, ArrayList<Byte> below, int rowIndex, int columnIndex) {
+    private boolean isDeadLock(ArrayList<Byte> row, ArrayList<Byte> above, ArrayList<Byte> below, int columnIndex) {
         int totalMoves = 0;
         Byte aboveByte = columnIndex >= above.size() ? Util.wall : above.get(columnIndex);
         Byte belowByte = columnIndex >= below.size() ? Util.wall : below.get(columnIndex);
@@ -90,15 +90,12 @@ public class GameEngine {
     }
 
     public ArrayList<BoardState> findPossibleBoxMoves(BoardState startState) {
-        ArrayList<BoardState> returnMoves = new ArrayList<>();
+        ArrayList<BoardState> returnMoves = Util.getArrayBoardState();
         intermediatePriorityQue.add(startState);
         intermediateSeenStates.add(startState);
 
         BoardState state;
         while (!intermediatePriorityQue.isEmpty()) {
-            if (Util.getBoardStateCount() != Util.getBoardStateSize() + seenStates.size() + intermediateSeenStates.size() - 1) {
-                System.out.println("Leak in findPossibleBoxMoves1");
-            }
             state = intermediatePriorityQue.removeFirst();
             BoardState child = state.getChild();
             for (byte i = Util.up; i <= Util.down; i++) {
@@ -135,14 +132,10 @@ public class GameEngine {
             }
             Util.recycle(child);
         }
-        int beforeSize = Util.getBoardStateSize();
         for (BoardState b : intermediateSeenStates) {
             if (!returnMoves.contains(b) && !b.equals(startState)) {
                 Util.recycle(b);
             }
-        }
-        if (Util.getBoardStateSize() - beforeSize != intermediateSeenStates.size() - returnMoves.size() - 1) {
-            System.out.println("Leak in findPossibleBoxMoves2");
         }
         //TODO Pool Arraylist<BoardStates>
         intermediateSeenStates.clear();
@@ -166,15 +159,13 @@ public class GameEngine {
                     break;
             }
             ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
-            if (Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()) {
-                System.out.println("Leak in findSolutionBFSHelper");
-            }
             for (int i = 0; i < possibleMoves.size(); i++) {
                 BoardState move = possibleMoves.get(i);
                 if (isGoalState(move)) {
                     for (int j = i + 1; j < possibleMoves.size(); j++) {
                         Util.recycle(possibleMoves.get(j));
                     }
+                    Util.recycleABS(possibleMoves);
                     return move;
                 }
                 if (!seenStates.contains(move)) {
@@ -184,6 +175,7 @@ public class GameEngine {
                     Util.recycle(move);
                 }
             }
+            Util.recycleABS(possibleMoves);
         }
     }
 
@@ -199,6 +191,9 @@ public class GameEngine {
             Util.recycle(p);
 
         }
+        for(ArrayList<Byte> ab : board){
+            Util.recycleAB(ab);
+        }
         priorityQue.clear();
         seenStates.clear();
         goalNodes.clear();
@@ -206,7 +201,7 @@ public class GameEngine {
     }
 
     public ArrayList<Byte> findSolution(int searchType) {
-        ArrayList<Byte> returnMoves = new ArrayList<>();
+        ArrayList<Byte> returnMoves = Util.getArrayByte();
         BoardState goalState = findSolutionHelper(searchType);
 
         BoardState iterState = goalState;
