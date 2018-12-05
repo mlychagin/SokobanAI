@@ -469,4 +469,58 @@ public class GameEngine {
         }
         Util.recycle(iterState);
     }
+
+    public int hblocksOnGoal(BoardState state)
+    {
+      int counter = 0;
+      for (Pair p : state.boxPositions) {
+        if (goalNodes.contains(p)) {
+          counter ++;
+        }
+      }
+      return counter;
+    }
+    public int hManhattanToAnyGoal(BoardState state)
+    {
+      int totalDistance = 0;
+      int tempDistance = -1;
+      for(Pair p : state.boxPositions)
+      {
+        for(Pair g: goalNodes)
+        {
+          tempDistance = Math.max(tempDistance, manhattanDistance(p,g));
+        }
+        totalDistance += tempDistance;
+        tempDistance = -1;
+      }
+      return totalDistance;
+    }
+  public int hManhattanToSingleGoal(BoardState state)
+  {
+    int totalDistance = 0;
+    int tempDistance = -1;
+    Pair tempGoalPair = new Pair(-1,-1);
+    HashSet<Pair> tempGoalNodes = (HashSet)goalNodes.clone();
+    for(Pair p : state.boxPositions)
+    {
+      for(Pair g: tempGoalNodes)
+      {
+        int dis = manhattanDistance(p,g);
+        if (Math.max(tempDistance,dis)  == dis)
+        {
+          tempDistance = dis;
+          tempGoalPair = g;
+        }
+
+      }
+      totalDistance += tempDistance;
+      tempGoalNodes.remove(tempGoalPair);
+      tempDistance = -1;
+    }
+    return totalDistance;
+  }
+    private int manhattanDistance(Pair source, Pair destination)
+    {
+      return Math.abs(source.first - destination.first) + Math.abs(source.second - destination.second);
+    }
 }

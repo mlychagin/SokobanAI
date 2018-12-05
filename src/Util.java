@@ -28,6 +28,8 @@ public class Util {
     public static final int random = 104;
 
     public static final int hBoxesOnGoal = 200;
+    public static final int hManhattanToAnyGoal = 201;
+    public static final int hManhattanToSingleGoal = 202;
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
