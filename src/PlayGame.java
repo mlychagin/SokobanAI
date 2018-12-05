@@ -55,6 +55,7 @@ public class PlayGame {
         engine.setBoardSize(inFile.nextLine());
         engine.setWalls(inFile.nextLine());
         engine.setBoxes(inFile.nextLine());
+        engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = engine.findSolution(Util.bfs);
         printSolution(solution);

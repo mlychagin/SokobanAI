@@ -1,12 +1,4 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.lang.Math;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class GameEngine {
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
@@ -24,6 +16,7 @@ public class GameEngine {
 
     public void setDeadlocks(){
         System.out.println(root.printBoard(board));
+        System.out.flush();
         setDeadPositions();
         setWallPositionsOutside();
         setDeadPositionsAlgo();
@@ -69,6 +62,7 @@ public class GameEngine {
     }
 
     public void setBoardSize(String line){
+        root = Util.getBoard();
         Scanner word = new Scanner(line);
         int xSize = Integer.parseInt(word.next());
         int ySize = Integer.parseInt(word.next());
@@ -84,7 +78,7 @@ public class GameEngine {
     public void setWalls(String line){
         Scanner word = new Scanner(line);
         int nWalls = Integer.parseInt(word.next());
-        for(int i = 0; i < nWalls; i++){
+        for(int i = 0; i < nWalls - 1; i++){
             int xCoor = (Integer.parseInt(word.next())-1);
             int yCoor = (Integer.parseInt(word.next())-1);
             BoardState.setCoordinate(board, xCoor, yCoor, Util.wall);
@@ -98,6 +92,16 @@ public class GameEngine {
             int xCoor = (Integer.parseInt(word.next())-1);
             int yCoor = (Integer.parseInt(word.next())-1);
             root.addBoxLocation(xCoor, yCoor);
+        }
+    }
+
+    public void setGoals(String line){
+        Scanner word = new Scanner(line);
+        int nGoals = Integer.parseInt(word.next());
+        for(int i = 0; i < nGoals; i++){
+            int xCoor = (Integer.parseInt(word.next())-1);
+            int yCoor = (Integer.parseInt(word.next())-1);
+            goalNodes.add(Util.getPair(xCoor, yCoor));
         }
     }
 
