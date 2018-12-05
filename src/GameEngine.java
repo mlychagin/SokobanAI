@@ -2,9 +2,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.lang.Math;
+import java.util.PriorityQueue;
 
 public class GameEngine {
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
+    private PriorityQueue<PairBoardState> priorityQueueForHeuristic = new PriorityQueue<>();
     private HashSet<BoardState> seenStates = new HashSet<>();
     private LinkedList<BoardState> intermediatePriorityQue = new LinkedList<>();
     private HashSet<BoardState> intermediateSeenStates = new HashSet<>();
@@ -231,9 +233,10 @@ public class GameEngine {
         }
         return lastMax * lastMax;
     }
-    public BoardState findSolutionHelperIterative() {
+    public BoardState findSolutionHelperHeuristic() {
         System.out.print(root.printBoard(board));
-        priorityQue.add(root);
+        PairBoardState forRoot = new PairBoardState(0,root);
+        priorityQueueForHeuristic.add(forRoot);
         seenStates.add(root);
 
 
@@ -241,7 +244,7 @@ public class GameEngine {
         int counter =0;
         while (true) {
             counter ++;
-
+            state = priorityQueueForHeuristic.remove().getBoardState();
             ArrayList<BoardState> possibleMoves = findPossibleBoxMoves(state);
             if (Util.getBoardStateCount() != Util.getBoardStateSize() + possibleMoves.size() + seenStates.size()) {
                 System.out.println("Leak in findSolutionBFSHelper");
@@ -255,7 +258,10 @@ public class GameEngine {
                     return move;
                 }
                 if (!seenStates.contains(move)) {
-                    priorityQue.add(move);
+                    int heuristic = 0;
+//                    calculate heuristic
+                    PairBoardState boardPair = new PairBoardState(heuristic,move);
+                    priorityQueueForHeuristic.add(boardPair);
                     seenStates.add(move);
                 } else {
                     Util.recycle(move);
