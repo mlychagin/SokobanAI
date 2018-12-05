@@ -1,5 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.UTFDataFormatException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
@@ -47,6 +48,19 @@ public class PlayGame {
                 ArrayList<Byte> solution = engine.findSolution(Util.dfs);
                 printSolution(solution);
                 Util.recycleAB(solution);
+                int countBP = Util.getCountBoardPool();
+                int sizeBP = Util.getSizeBoardPool();
+
+                int countPP = Util.getCountPairPool();
+                int sizePP = Util.getSizePairPool();
+
+                int countABSP = Util.getCountArrayBoardStatePool();
+                int sizeABSP = Util.getSizeArrayBoardStatePool();
+
+                int countABP = Util.getCountArrayBytePool();
+                int sizeABP = Util.getSizeArrayBytePool();
+
+                System.out.flush();
                 inputMap.clear();
             } else {
                 inputMap.add(line);
