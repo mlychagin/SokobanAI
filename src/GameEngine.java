@@ -67,14 +67,17 @@ public class GameEngine {
         
         while(inFile.hasNextLine()){
             Scanner word = new Scanner(inFile.nextLine());
-            ArrayList<Byte> row = new ArrayList<Byte>();
+            
         	if(i == 0){
         		int xSize = Integer.parseInt(word.next());
         		int ySize = Integer.parseInt(word.next());
         		//BoardState.boardDim.setBoardDimensions(xSize, ySize);
+
         		for(int k = 0; k < ySize; k++){
+        			ArrayList<Byte> row = new ArrayList<Byte>();
         			for(int l = 0; l < xSize; l++){
         				row.add(Util.empty);
+                		//board.get(k).set(l,Util.empty);
         			}
         			board.add(row);
         		}
