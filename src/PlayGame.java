@@ -45,7 +45,7 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                ArrayList<Byte> solution = engine.findSolution(Util.dfs);
+                ArrayList<Byte> solution = engine.findSolution(Util.huerisitc);
                 printSolution(solution);
                 Util.recycleAB(solution);
                 int countBP = Util.getCountBoardPool();

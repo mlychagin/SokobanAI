@@ -85,13 +85,13 @@ public class BoardState {
         switch (direction) {
             case Util.up:
             case Util.down:
-                if (!((ud1 == Util.wall || ud1 == Util.deadZone) && (ud2 == Util.wall || ud2 == Util.deadZone) && (ud3 == Util.wall || ud3 == Util.deadZone) && (ud4 == Util.wall || ud4 == Util.deadZone))) {
+                if (!(ud1 == Util.wall && ud2 == Util.wall && ud3 == Util.wall && ud4 == Util.wall)) {
                     return false;
                 }
                 break;
             case Util.left:
             case Util.right:
-                if (!((lr1 == Util.wall || lr1 == Util.deadZone) && (lr2 == Util.wall || lr2 == Util.deadZone) && (lr3 == Util.wall || lr3 == Util.deadZone) && (lr4 == Util.wall || lr4 == Util.deadZone))) {
+                if (!(lr1 == Util.wall && lr2 == Util.wall && lr3 == Util.wall && lr4 == Util.wall)) {
                     return false;
                 }
                 break;
