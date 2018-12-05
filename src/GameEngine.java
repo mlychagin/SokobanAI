@@ -60,9 +60,10 @@ public class GameEngine {
     public void initInputBoard() throws FileNotFoundException {
         root = Util.getBoard();
         int i = 0;
-        File input = null;
+        //File input = new File("sokoban1.txt");
         
-        Scanner inFile = new Scanner(new FileReader(input));
+        //Scanner inFile = new Scanner(new FileReader(input));
+        Scanner inFile = new Scanner(new File("src/sokoban1.txt"));
         
         while(inFile.hasNextLine()){
             Scanner word = new Scanner(inFile.nextLine());
@@ -70,7 +71,7 @@ public class GameEngine {
         	if(i == 0){
         		int xSize = Integer.parseInt(word.next());
         		int ySize = Integer.parseInt(word.next());
-        		BoardState.boardDim.setBoardDimensions(xSize, ySize);
+        		//BoardState.boardDim.setBoardDimensions(xSize, ySize);
         		for(int k = 0; k < ySize; k++){
         			for(int l = 0; l < xSize; l++){
         				row.add(Util.empty);
