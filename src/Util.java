@@ -25,6 +25,9 @@ public class Util {
     public static final int dfs = 101;
     public static final int ids = 102;
     public static final int huerisitc = 103;
+    public static final int random = 104;
+
+    public static final int hBoxesOnGoal = 200;
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();

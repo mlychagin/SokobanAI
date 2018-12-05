@@ -32,7 +32,7 @@ public class PlayGame {
         Collections.reverse(solution);
     }
 
-    private static void statLeak(){
+    private static void statLeak() {
         int countBP = Util.getCountBoardPool();
         int sizeBP = Util.getSizeBoardPool();
 
@@ -51,13 +51,12 @@ public class PlayGame {
     private static void parseProf(String args[]) throws FileNotFoundException {
         Scanner inFile = new Scanner(new FileReader(args[0]));
         GameEngine engine = new GameEngine();
-
         engine.setBoardSize(inFile.nextLine());
         engine.setWalls(inFile.nextLine());
         engine.setBoxes(inFile.nextLine());
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
-        ArrayList<Byte> solution = engine.findSolution(Util.bfs);
+        ArrayList<Byte> solution = engine.findSolution(Util.bfs, Util.hBoxesOnGoal);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -75,7 +74,7 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                ArrayList<Byte> solution = engine.findSolution(Util.huerisitc);
+                ArrayList<Byte> solution = engine.findSolution(Util.huerisitc, Util.hBoxesOnGoal);
                 printSolution(solution);
                 Util.recycleAB(solution);
                 statLeak();
@@ -86,8 +85,8 @@ public class PlayGame {
         }
     }
 
-    public static void main (String args[]) throws FileNotFoundException {
-        //parseFile(args);
-        parseProf(args);
+    public static void main(String args[]) throws FileNotFoundException {
+        parseFile(args);
+        //parseProf(args);
     }
 }
