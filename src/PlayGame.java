@@ -19,7 +19,7 @@ public class PlayGame {
                     break;
                 case Util.left :
                     System.out.print("Left");
-                    break;
+                    break; 
                 case Util.right :
                     System.out.print("Right");
                     break;

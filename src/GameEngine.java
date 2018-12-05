@@ -63,14 +63,13 @@ public class GameEngine {
         File input = null;
         
         Scanner inFile = new Scanner(new FileReader(input));
-        String line; 
         
         while(inFile.hasNextLine()){
-        	line = inFile.nextLine();
+            Scanner word = new Scanner(inFile.nextLine());
             ArrayList<Byte> row = new ArrayList<Byte>();
         	if(i == 0){
-        		int xSize = Character.getNumericValue(line.charAt(0));
-        		int ySize = Character.getNumericValue(line.charAt(1));
+        		int xSize = Integer.parseInt(word.next());
+        		int ySize = Integer.parseInt(word.next());
         		BoardState.boardDim.setBoardDimensions(xSize, ySize);
         		for(int k = 0; k < ySize; k++){
         			for(int l = 0; l < xSize; l++){
@@ -79,30 +78,29 @@ public class GameEngine {
         			board.add(row);
         		}
         	}else if(i == 1){
-        		//int numberOfWallSquares = line.charAt(0);
-        		for(int j = 1; j < line.length(); j++){
-        			int xCoor = Character.getNumericValue(line.charAt(j));
-        			j++;
-            		int yCoor = Character.getNumericValue(line.charAt(j));
+        		word.hasNext(); //int numberOfWallSquares = Integer.parseInt(word.next());
+        		while(word.hasNext()){
+        			int xCoor = Integer.parseInt(word.next());
+            		int yCoor = Integer.parseInt(word.next());
             		
         			board.get(xCoor).set(yCoor,Util.wall);
         		}
         	}else if(i == 2){
-        		//int numberOfBoxes = line.charAt(0);
-        		for(int j = 1; j < line.length(); j++){
-        			int xCoor = Character.getNumericValue(line.charAt(j));
-        			j++;
-            		int yCoor = Character.getNumericValue(line.charAt(j));
+        		//int numberOfBoxes = Integer.parseInt(word.next());
+        		word.hasNext();
+        		while(word.hasNext()){
+        			int xCoor = Integer.parseInt(word.next());
+            		int yCoor = Integer.parseInt(word.next());
             		
             		root.addBoxLocation(xCoor, yCoor);
         			board.get(xCoor).set(yCoor,Util.box);
         		}
         	}else if(i == 3){
-        		//int numberOfGoals = line.charAt(0);
-        		for(int j = 1; j < line.length(); j++){
-        			int xCoor = Character.getNumericValue(line.charAt(j));
-        			j++;
-            		int yCoor = Character.getNumericValue(line.charAt(j));
+        		//int numberOfGoals = Integer.parseInt(word.next());
+        		word.next();
+        		while(word.hasNext()){
+        			int xCoor = Integer.parseInt(word.next());
+            		int yCoor = Integer.parseInt(word.next());
             		
                     goalNodes.add(Util.getPair(xCoor, yCoor));
             		//check for box
@@ -113,8 +111,8 @@ public class GameEngine {
             		}
         		}
         	}else if(i == 4){
-        		int xCoor = Character.getNumericValue(line.charAt(0));      	
-        		int yCoor = Character.getNumericValue(line.charAt(1));
+        		int xCoor = Integer.parseInt(word.next());     	
+        		int yCoor = Integer.parseInt(word.next());
         		
                 root.setPlayerCoordinates(xCoor, yCoor);
         		if(board.get(xCoor).get(yCoor) == Util.goal || 
@@ -125,6 +123,7 @@ public class GameEngine {
         		}        	
         	}
         	i++;
+        	word.close();
         }
         setDeadPositions();
         inFile.close();
