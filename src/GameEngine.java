@@ -83,8 +83,10 @@ public class GameEngine {
         		while(word.hasNext()){
         			int yCoor = (Integer.parseInt(word.next())-1);
             		int xCoor = (Integer.parseInt(word.next())-1);
+            		//System.out.println("setting wall at: " + yCoor + ", " + xCoor);
             		
         			board.get(yCoor).set(xCoor,Util.wall);
+        			//board[yCoor][xCoor] = Util.wall;
         		}
         	}else if(i == 2){
         		//int numberOfBoxes = Integer.parseInt(word.next());
@@ -104,13 +106,15 @@ public class GameEngine {
             		int xCoor = (Integer.parseInt(word.next())-1);
             		
                     goalNodes.add(Util.getPair(xCoor, yCoor));
-            		board.get(xCoor).set(yCoor,Util.goal);
+                    if(board.get(xCoor).get(yCoor) == Util.box){
+                		board.get(xCoor).set(yCoor,Util.goal);
+                    }
         		}
         	}else if(i == 4){
         		int yCoor = (Integer.parseInt(word.next())-1);
         		int xCoor = (Integer.parseInt(word.next())-1);
         		
-                //root.setPlayerCoordinates(xCoor, yCoor);
+                root.setPlayerCoordinates(xCoor, yCoor);
         		if(board.get(xCoor).get(yCoor) == Util.goal){
         			board.get(xCoor).set(yCoor,Util.player);
         		}        	
