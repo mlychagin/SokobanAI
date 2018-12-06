@@ -33,7 +33,7 @@ public class PairBoardState implements Comparable<PairBoardState> {
         return boardState;
     }
 
-    public void reset(){
+    public void reset() {
         boardState = null;
     }
 
