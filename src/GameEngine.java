@@ -535,18 +535,94 @@ public class GameEngine {
     int i = 0;
     int j = 0;
     int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
+    ArrayList<TreeSet<Pair>> priority= new ArrayList<>();
+    HashMap<Integer,Integer> goalToBox = new HashMap<Integer, Integer>();
     for(Pair p : state.boxPositions)
     {
+      TreeSet<Pair> boxCosts = new TreeSet<>();
       for(Pair g: goalNodes)
       {
 //        Calculate real cost
         cost[i][j] = manhattanDistance(p,g);
+        boxCosts.add(new Pair(cost[i][j],j));
+
         j++;
       }
+      priority.add(boxCosts);
       j = 0;
       i++;
     }
 //    Take the array and find the min matching cost
+    for(int k = 0; k < priority.size(); k++)
+    {
+
+    }
     return 0;
+  }
+  private void resolveConflicts(ArrayList<TreeSet<Pair>> priority, HashMap<Integer,Integer> goalToBox,int boxNum)
+  {
+    TreeSet<Pair> currentBoxSet = priority.get(boxNum);
+    Pair currentMinPair = currentBoxSet.first();
+    if(goalToBox.containsKey(currentMinPair.second))
+    {
+       int conflictBoxNum = goalToBox.get(currentMinPair.second);
+       TreeSet<Pair> conflictBoxSet = priority.get(conflictBoxNum);
+       Pair conflictMinPair = conflictBoxSet.first();
+
+       Iterator<Pair> currentIter = currentBoxSet.iterator();
+       Iterator<Pair> conflictIter = conflictBoxSet.iterator();
+        Pair currentNextPair = null;
+        Pair conflictNext = null;
+       for(int i= 0;i < 2; i++)
+       {
+
+          if(currentIter.hasNext())
+          {
+            currentNextPair= currentIter.next();
+          }
+          else{
+            currentNextPair = null;
+          }
+         if(conflictIter.hasNext())
+         {
+           conflictNext = conflictIter.next();
+         }
+         else
+         {
+           conflictNext = null;
+
+         }
+       }
+       if(currentNextPair == null) {
+         goalToBox.replace(currentMinPair.second,boxNum);
+         conflictBoxSet.pollFirst();
+         resolveConflicts(priority,goalToBox,conflictBoxNum);
+         return;
+       }
+       else if(conflictNext == null) {
+         currentBoxSet.pollFirst();
+         resolveConflicts(priority,goalToBox,boxNum);
+         return;
+
+       }
+       int currentDifferenceInValue = currentNextPair.first - currentMinPair.first;
+       int conflictDifferenceInValue = conflictNext.first - conflictMinPair.first;
+
+       if(currentDifferenceInValue > conflictDifferenceInValue)
+       {
+         currentBoxSet.pollFirst();
+         resolveConflicts(priority,goalToBox,boxNum);
+         return;
+       }
+       else
+       {
+         goalToBox.replace(currentMinPair.second,boxNum);
+         conflictBoxSet.pollFirst();
+         resolveConflicts(priority,goalToBox,conflictBoxNum);
+         return;
+       }
+
+    }
+    goalToBox.put(currentMinPair.second,boxNum);
   }
 }

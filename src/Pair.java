@@ -59,4 +59,7 @@ public class Pair {
         result = 31 * result + second;
         return result;
     }
+    public int compareTo(Pair o) {
+        return Integer.compare(this.first, o.first);
+    }
 }
