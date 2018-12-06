@@ -207,22 +207,47 @@ public class GameEngine {
         intermediateSeenStates.clear();
     }
 
-    public int calculateHueristic(BoardState boardState, int heuristic){
-        return 0;
+    public int calculateHueristic(BoardState boardState, int heuristic) {
+        switch (heuristic) {
+            case Util.hManhattanToAnyGoal:
+                return hManhattanToAnyGoal(boardState);
+            case Util.hBoxesOnGoal:
+                return hblocksOnGoal(boardState);
+            default:
+                return hManhattanToSingleGoal(boardState);
+        }
     }
 
-    public BoardState parseMoves(BoardState state, ArrayList<BoardState> possibleMoves, int searchType, int heuristic){
+    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+        if (searchType == Util.random) {
+            int totalHueristic = 0;
+            ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
+            for (BoardState boardState : possibleMoves) {
+                PairBoardState boardPair = Util.getPairBoard(calculateHueristic(boardState, heuristic), boardState);
+                totalHueristic += boardPair.getKey();
+                pairBoardStates.add(boardPair);
+            }
+            int solution = rnd.nextInt(totalHueristic + 1);
+            for (PairBoardState pairBoardState : pairBoardStates) {
+                solution -= pairBoardState.getKey();
+                if (solution <= 0) {
+                    pairBoardStates.remove(pairBoardState);
+                    for (PairBoardState removePBS : pairBoardStates) {
+                        Util.recycle(removePBS.getBoardState());
+                        Util.recycle(removePBS);
+                    }
+                    BoardState returnBoardState = pairBoardState.getBoardState();
+                    Util.recycle(pairBoardState);
+                    return returnBoardState;
+                }
+            }
+            System.out.println("Impossible Random");
+        }
         for (int i = 0; i < possibleMoves.size(); i++) {
             BoardState move = possibleMoves.get(i);
-            if (isGoalState(move)) {
-                for (int j = i + 1; j < possibleMoves.size(); j++) {
-                    Util.recycle(possibleMoves.get(j));
-                }
-                return move;
-            }
             if (!seenStates.contains(move)) {
-                if(searchType == Util.huerisitc){
-                    PairBoardState boardPair = new PairBoardState(calculateHueristic(move, heuristic), move);
+                if (searchType == Util.huerisitc) {
+                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic), move);
                     priorityQueueForHeuristic.add(boardPair);
                 } else {
                     priorityQue.add(move);
@@ -235,7 +260,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState nextBoardState(BoardState state, Pair depth, int searchType){
+    public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
         if (searchType == Util.huerisitc && priorityQueueForHeuristic.isEmpty()) return null;
         if (searchType != Util.huerisitc && priorityQue.isEmpty()) return null;
         switch (searchType) {
@@ -266,7 +291,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState initSearch(BoardState startingState, int searchType){
+    public BoardState initSearch(BoardState startingState, int searchType) {
         seenStates.add(startingState);
         switch (searchType) {
             case Util.bfs:
@@ -275,7 +300,7 @@ public class GameEngine {
                 priorityQue.add(startingState);
                 break;
             case Util.huerisitc:
-                priorityQueueForHeuristic.add(new PairBoardState(0, startingState));
+                priorityQueueForHeuristic.add(Util.getPairBoard(0, startingState));
                 break;
             case Util.random:
                 seenStates.remove(startingState);
@@ -291,16 +316,23 @@ public class GameEngine {
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
             state = nextBoardState(state, depth, searchType);
-            if(state == null){
+            if (state == null) {
                 return null;
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             findPossibleBoxMoves(state, possibleMoves, null);
-            BoardState returnMove = parseMoves(state, possibleMoves, searchType, heuristic);
-            Util.recycleABS(possibleMoves);
-            if(returnMove != null){
-                return returnMove;
+            for (int i = 0; i < possibleMoves.size(); i++) {
+                BoardState move = possibleMoves.get(i);
+                if (isGoalState(move)) {
+                    for (int j = i + 1; j < possibleMoves.size(); j++) {
+                        Util.recycle(possibleMoves.get(j));
+                    }
+                    Util.recycleABS(possibleMoves);
+                    return move;
+                }
             }
+            state = parseMoves(possibleMoves, searchType, heuristic);
+            Util.recycleABS(possibleMoves);
         }
     }
 
@@ -352,6 +384,9 @@ public class GameEngine {
     public ArrayList<Byte> findSolution(int searchType, int heuristic) {
         ArrayList<Byte> returnMoves = Util.getArrayByte();
         BoardState goalState = findSolutionHelper(root, searchType, heuristic);
+        while (searchType == Util.random && goalState == null) {
+            goalState = findSolutionHelper(root, searchType, heuristic);
+        }
 
         BoardState iterState = goalState;
         while (iterState != null) {
@@ -470,83 +505,74 @@ public class GameEngine {
         Util.recycle(iterState);
     }
 
-    public int hblocksOnGoal(BoardState state)
-    {
-      int counter = 0;
-      for (Pair p : state.boxPositions) {
-        if (goalNodes.contains(p)) {
-          counter ++;
+    public int hblocksOnGoal(BoardState state) {
+        int counter = 0;
+        for (Pair p : state.boxPositions) {
+            if (goalNodes.contains(p)) {
+                counter++;
+            }
         }
-      }
-      return counter;
+        return counter;
     }
-    public int hManhattanToAnyGoal(BoardState state)
-    {
-      int totalDistance = 0;
-      int tempDistance = -1;
-      for(Pair p : state.boxPositions)
-      {
-        for(Pair g: goalNodes)
-        {
-          tempDistance = Math.max(tempDistance, manhattanDistance(p,g));
-        }
-        totalDistance += tempDistance;
-        tempDistance = -1;
-      }
-      return totalDistance;
-    }
-  public int hManhattanToSingleGoal(BoardState state)
-  {
-    int totalDistance = 0;
-    int tempDistance = -1;
-    Pair tempGoalPair = new Pair(-1,-1);
-    HashSet<Pair> tempGoalNodes = (HashSet)goalNodes.clone();
-    for(Pair p : state.boxPositions)
-    {
-      for(Pair g: tempGoalNodes)
-      {
-        int dis = manhattanDistance(p,g);
-        if (Math.max(tempDistance,dis)  == dis)
-        {
-          tempDistance = dis;
-          tempGoalPair = g;
-        }
 
-      }
-      totalDistance += tempDistance;
-      tempGoalNodes.remove(tempGoalPair);
-      tempDistance = -1;
+    public int hManhattanToAnyGoal(BoardState state) {
+        int totalDistance = 0;
+        int tempDistance = -1;
+        for (Pair p : state.boxPositions) {
+            for (Pair g : goalNodes) {
+                tempDistance = Math.max(tempDistance, manhattanDistance(p, g));
+            }
+            totalDistance += tempDistance;
+            tempDistance = -1;
+        }
+        return totalDistance;
     }
-    return totalDistance;
-  }
-    private int manhattanDistance(Pair source, Pair destination)
-    {
-      return Math.abs(source.first - destination.first) + Math.abs(source.second - destination.second);
-    }
-  private int euclideanDistanceSquared(Pair source, Pair destination)
-  {
-    int temp1 = (destination.first - source.first) * (destination.first - source.first);
-    int temp2 = (destination.second - source.second) * (destination.second - source.second);
-    return temp1 + temp2;
-  }
 
-  public int minMatching(BoardState state)
-  {
-    int i = 0;
-    int j = 0;
-    int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
-    for(Pair p : state.boxPositions)
-    {
-      for(Pair g: goalNodes)
-      {
+    public int hManhattanToSingleGoal(BoardState state) {
+        int totalDistance = 0;
+        int tempDistance = -1;
+        Pair tempGoalPair = new Pair(-1, -1);
+        HashSet<Pair> tempGoalNodes = (HashSet) goalNodes.clone();
+        for (Pair p : state.boxPositions) {
+            for (Pair g : tempGoalNodes) {
+                int dis = manhattanDistance(p, g);
+                if (Math.max(tempDistance, dis) == dis) {
+                    tempDistance = dis;
+                    tempGoalPair = g;
+                }
+
+            }
+            totalDistance += tempDistance;
+            tempGoalNodes.remove(tempGoalPair);
+            tempDistance = -1;
+        }
+        return totalDistance;
+    }
+
+    private int manhattanDistance(Pair source, Pair destination) {
+        return Math.abs(source.first - destination.first) + Math.abs(source.second - destination.second);
+    }
+
+    private int euclideanDistanceSquared(Pair source, Pair destination) {
+        int temp1 = (destination.first - source.first) * (destination.first - source.first);
+        int temp2 = (destination.second - source.second) * (destination.second - source.second);
+        return temp1 + temp2;
+    }
+
+    public int minMatching(BoardState state) {
+        int i = 0;
+        int j = 0;
+        int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
+        for (Pair p : state.boxPositions) {
+            for (Pair g : goalNodes) {
 //        Calculate real cost
-        cost[i][j] = manhattanDistance(p,g);
-        j++;
-      }
-      j = 0;
-      i++;
-    }
+                cost[i][j] = manhattanDistance(p, g);
+                j++;
+            }
+            j = 0;
+            i++;
+        }
 //    Take the array and find the min matching cost
-    return 0;
-  }
+        return 0;
+    }
 }

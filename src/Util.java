@@ -33,11 +33,13 @@ public class Util {
 
     static LinkedList<BoardState> boardPool = new LinkedList<>();
     static LinkedList<Pair> pairPool = new LinkedList<>();
+    static LinkedList<PairBoardState> pairBoardPool = new LinkedList<>();
     static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
     static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
 
     static int countBoardPool = 0;
     static int countPairPool = 0;
+    static int countPairBoardPool = 0;
     static int countArrayBoardStatePool = 0;
     static int countArrayBytePool = 0;
 
@@ -106,6 +108,21 @@ public class Util {
         }
         countArrayBytePool++;
         return new ArrayList<>();
+    }
+
+    static void recycle(PairBoardState state) {
+        state.reset();
+        pairBoardPool.add(state);
+    }
+
+    static PairBoardState getPairBoard(int key, BoardState board) {
+        if (!pairBoardPool.isEmpty()) {
+            PairBoardState b = pairBoardPool.poll();
+            b.set(key, board);
+            return b;
+        }
+        countPairBoardPool++;
+        return new PairBoardState(key, board);
     }
 
     static int getCountBoardPool(){
