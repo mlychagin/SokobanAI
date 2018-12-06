@@ -1,16 +1,16 @@
+import org.omg.CORBA.ARG_IN;
+
 import java.util.*;
 
 public class GameEngine {
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
-    private PriorityQueue<PairBoardState> priorityQueueForHeuristic = new PriorityQueue<>();
-    private HashSet<BoardState> seenStates = new HashSet<>();
     private LinkedList<BoardState> intermediatePriorityQue = new LinkedList<>();
     private HashSet<BoardState> intermediateSeenStates = new HashSet<>();
     private ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashSet<Pair> goalNodes = new HashSet<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
     private BoardState root;
-    Random rnd = new Random();
+    private Random rnd = new Random();
 
     public GameEngine() {
     }
@@ -218,7 +218,7 @@ public class GameEngine {
         }
     }
 
-    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+    public BoardState parseMoves(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqbps, ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
@@ -248,7 +248,7 @@ public class GameEngine {
             if (!seenStates.contains(move)) {
                 if (searchType == Util.huerisitc) {
                     PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic), move);
-                    priorityQueueForHeuristic.add(boardPair);
+                    pqbps.add(boardPair);
                 } else {
                     priorityQue.add(move);
                 }
@@ -260,8 +260,8 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
-        if (searchType == Util.huerisitc && priorityQueueForHeuristic.isEmpty()) return null;
+    public BoardState nextBoardState(PriorityQueue<PairBoardState> pqpbs, BoardState state, Pair depth, int searchType) {
+        if (searchType == Util.huerisitc && pqpbs.isEmpty()) return null;
         if (searchType != Util.huerisitc && priorityQue.isEmpty()) return null;
         switch (searchType) {
             case Util.bfs:
@@ -282,7 +282,7 @@ public class GameEngine {
 
                 }
             case Util.huerisitc:
-                return priorityQueueForHeuristic.remove().getBoardState();
+                return pqpbs.remove().getBoardState();
             case Util.random:
                 return state;
             default:
@@ -291,7 +291,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState initSearch(BoardState startingState, int searchType) {
+    public BoardState initSearch(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs, BoardState startingState, int searchType) {
         seenStates.add(startingState);
         switch (searchType) {
             case Util.bfs:
@@ -300,7 +300,7 @@ public class GameEngine {
                 priorityQue.add(startingState);
                 break;
             case Util.huerisitc:
-                priorityQueueForHeuristic.add(Util.getPairBoard(0, startingState));
+                pqpbs.add(Util.getPairBoard(0, startingState));
                 break;
             case Util.random:
                 seenStates.remove(startingState);
@@ -311,11 +311,11 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic) {
-        BoardState state = initSearch(startingState, searchType);
+    public BoardState findSolutionHelper(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs, BoardState startingState, int searchType, int heuristic) {
+        BoardState state = initSearch(seenStates, pqpbs, startingState, searchType);
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
-            state = nextBoardState(state, depth, searchType);
+            state = nextBoardState(pqpbs, state, depth, searchType);
             if (state == null) {
                 return null;
             }
@@ -331,7 +331,7 @@ public class GameEngine {
                     return move;
                 }
             }
-            state = parseMoves(possibleMoves, searchType, heuristic);
+            state = parseMoves(seenStates, pqpbs, possibleMoves, searchType, heuristic);
             Util.recycleABS(possibleMoves);
         }
     }
@@ -353,20 +353,24 @@ public class GameEngine {
         return lastMax * lastMax;
     }
 
-    public void cleanUpReset() {
+    public void cleanUpReset(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs) {
         for (BoardState b : priorityQue) {
             seenStates.remove(b);
             Util.recycle(b);
+        }
+        for (PairBoardState p : pqpbs) {
+            Util.recycle(p);
         }
         for (BoardState b : seenStates) {
             Util.recycle(b);
         }
         priorityQue.clear();
         seenStates.clear();
+        pqpbs.clear();
     }
 
-    public void cleanUpAll() {
-        cleanUpReset();
+    public void cleanUpAll(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs) {
+        cleanUpReset(seenStates, pqpbs);
         for (Pair p : whiteSpaces) {
             Util.recycle(p);
         }
@@ -381,11 +385,13 @@ public class GameEngine {
         board.clear();
     }
 
-    public ArrayList<Byte> findSolution(int searchType, int heuristic) {
+    public ArrayList<Byte> findSolution(int searchType, int heuristic, boolean fullCleanUp) {
+        HashSet<BoardState> seenStates = new HashSet<>();
+        PriorityQueue<PairBoardState> pqpbs = new PriorityQueue<>();
         ArrayList<Byte> returnMoves = Util.getArrayByte();
-        BoardState goalState = findSolutionHelper(root, searchType, heuristic);
+        BoardState goalState = findSolutionHelper(seenStates, pqpbs, root, searchType, heuristic);
         while (searchType == Util.random && goalState == null) {
-            goalState = findSolutionHelper(root, searchType, heuristic);
+            goalState = findSolutionHelper(seenStates, pqpbs, root, searchType, heuristic);
         }
 
         BoardState iterState = goalState;
@@ -393,7 +399,11 @@ public class GameEngine {
             returnMoves.addAll(iterState.movesFromParent);
             iterState = iterState.parent;
         }
-        cleanUpAll();
+        if (fullCleanUp) {
+            cleanUpAll(seenStates, pqpbs);
+        } else {
+            cleanUpReset(seenStates, pqpbs);
+        }
         Util.recycle(goalState);
         return returnMoves;
     }
@@ -483,6 +493,8 @@ public class GameEngine {
     }
 
     public void setDeadPositionsAlgo() {
+        HashSet<BoardState> seenStates = new HashSet<>();
+        PriorityQueue<PairBoardState> pqpbs = new PriorityQueue<>();
         BoardState iterState = root.getChild();
         for (Pair p : iterState.boxPositions) {
             Util.recycle(p);
@@ -491,14 +503,14 @@ public class GameEngine {
         for (Pair p : whiteSpaces) {
             if (BoardState.getCoordinate(board, p) != Util.deadZone && !goalNodes.contains(p)) {
                 iterState.boxPositions.add(p);
-                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
+                BoardState solutionBoardState = findSolutionHelper(seenStates, pqpbs, iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
                     BoardState.setCoordinate(board, p, Util.deadZone);
                 } else {
                     Util.recycle(solutionBoardState);
                 }
                 seenStates.remove(iterState);
-                cleanUpReset();
+                cleanUpReset(seenStates, pqpbs);
                 iterState.boxPositions.clear();
             }
         }
@@ -557,6 +569,20 @@ public class GameEngine {
         int temp1 = (destination.first - source.first) * (destination.first - source.first);
         int temp2 = (destination.second - source.second) * (destination.second - source.second);
         return temp1 + temp2;
+    }
+
+    private int hMoveCost(BoardState state) {
+        int cost = 0;
+        while (state != null) {
+            cost += state.movesFromParent.size();
+            state = state.parent;
+        }
+        return cost;
+    }
+
+    public int hActualDistanceCost(BoardState state) {
+        //ArrayList<Byte> = findSolution(Util.huerisitc, Util.);
+        return 0;
     }
 
     public int minMatching(BoardState state) {
