@@ -13,19 +13,7 @@ public class PlayGame {
             if (!first) {
                 System.out.print(",");
             }
-            switch (b) {
-                case Util.up:
-                    System.out.print("Up");
-                    break;
-                case Util.left:
-                    System.out.print("Left");
-                    break;
-                case Util.right:
-                    System.out.print("Right");
-                    break;
-                case Util.down:
-                    System.out.print("Down");
-            }
+            System.out.print(Util.byteToString(b));
             first = false;
         }
         System.out.println("]");
@@ -74,7 +62,7 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                ArrayList<Byte> solution = engine.findSolution(Util.huerisitc, Util.hBoxesOnGoal);
+                ArrayList<Byte> solution = engine.findSolution(Util.random, Util.hBoxesOnGoal);
                 printSolution(solution);
                 Util.recycleAB(solution);
                 statLeak();

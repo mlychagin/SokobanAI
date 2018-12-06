@@ -33,6 +33,9 @@ public class PairBoardState implements Comparable<PairBoardState> {
         return boardState;
     }
 
+    public void reset(){
+        boardState = null;
+    }
 
     @Override
     public boolean equals(Object o) {
