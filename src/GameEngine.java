@@ -6,13 +6,12 @@ public class GameEngine {
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
-    HashMap<DoublePair, ArrayList<Integer>> distances = new HashMap<>();
+    private HashMap<DoublePair, ArrayList<Integer>> distances = new HashMap<>();
     private ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
     private BoardState root;
     private Random rnd = new Random();
-    Util util = new Util();
 
     public GameEngine() {
     }
@@ -123,7 +122,6 @@ public class GameEngine {
         setWallPositionsOutside();
         setDeadPositionsAlgo();
         setDistances();
-        System.out.flush();
     }
 
     public void setDeadPositions() {
@@ -177,7 +175,7 @@ public class GameEngine {
         Util.recycle(p);
     }
 
-    private void findWhiteSpaces() {
+    private void findWhiteSpacesHelper(){
         BoardState blankState = Util.getBoard();
         blankState.sokoban.set(root.sokoban);
         ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
@@ -187,8 +185,10 @@ public class GameEngine {
         }
         Util.recycleABS(possibleMoves);
         Util.recycle(blankState);
+    }
 
-        ArrayList<Pair> removePairs = new ArrayList<>();
+    private void findWhiteSpaces() {
+        findWhiteSpacesHelper();
         for (Pair p : whiteSpaces) {
             byte up = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.up), p.getSecond() + Util.getOffsetColumn(Util.up));
             byte down = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.down), p.getSecond() + Util.getOffsetColumn(Util.down));
@@ -219,26 +219,34 @@ public class GameEngine {
             }
             if (count == 3) {
                 if (root.sokoban.equals(p)) {
-                    root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetRow(finalDir));
+                    root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
                     root.movesFromParent.add(finalDir);
+
+                    Pair endLocation = Util.getPair(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
+                    if(root.boxPositions.contains(endLocation)){
+                        Pair box = root.boxPositions.get(root.boxPositions.indexOf(endLocation));
+                        box.set(box.getFirst() + Util.getOffsetRow(finalDir), box.getSecond() + Util.getOffsetColumn(finalDir));
+                    }
+                    Util.recycle(endLocation);
                 }
                 if (!goalNodes.containsKey(p)) {
                     Util.setCoordinate(board, p, Util.wall);
-                    removePairs.add(p);
                 }
             }
         }
-        for (Pair p : removePairs) {
-            whiteSpaces.remove(p);
+        for (Pair p : whiteSpaces) {
             Util.recycle(p);
         }
+        whiteSpaces.clear();
+        findWhiteSpacesHelper();
     }
 
     public void setDeadPositionsAlgo() {
         BoardState iterState = Util.getBoard();
         iterState.sokoban.set(root.sokoban);
         for (Pair p : whiteSpaces) {
-            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.containsKey(p)) {
+            //TODO Root?
+            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.containsKey(p) && !p.equals(root.sokoban)) {
                 iterState.boxPositions.add(p);
                 BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
@@ -259,8 +267,8 @@ public class GameEngine {
         BoardState saveRoot = root;
         goalNodes = new HashMap<>();
         root = Util.getBoard();
-        root.sokoban.set(saveRoot.sokoban);
         for (Pair playerLocation : whiteSpaces) {
+            root.sokoban.set(playerLocation);
             for (Pair boxLocation : whiteSpaces) {
                 if (!playerLocation.equals(boxLocation)) {
                     if (Util.getCoordinate(board, boxLocation) != Util.deadZone) {
@@ -717,4 +725,8 @@ public class GameEngine {
         goalNodes.clear();
         board.clear();
     }
+
+    /*
+     * Outdated
+     */
 }

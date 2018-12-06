@@ -10,6 +10,7 @@ public class Util {
     public static final byte invalidMove = 5;
     public static final byte playerMove = 6;
     public static final byte boxMove = 7;
+    public static final byte invalidBoxMove = 8;
 
     public static final byte empty = ' ';
     public static final byte box = '$';

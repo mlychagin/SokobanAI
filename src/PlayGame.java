@@ -64,7 +64,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.dfs, Util.hBoxesOnGoal, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hBoxesOnGoal, true);
                 printSolution(solution);
                 Util.recycleAB(solution);
                 statLeak();
