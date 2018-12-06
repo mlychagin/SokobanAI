@@ -125,35 +125,35 @@ public class Util {
         return new PairBoardState(key, board);
     }
 
-    static int getCountBoardPool(){
+    static int getCountBoardPool() {
         return countBoardPool;
     }
 
-    static int getCountPairPool(){
+    static int getCountPairPool() {
         return countPairPool;
     }
 
-    static int getCountArrayBoardStatePool(){
+    static int getCountArrayBoardStatePool() {
         return countArrayBoardStatePool;
     }
 
-    static int getCountArrayBytePool(){
+    static int getCountArrayBytePool() {
         return countArrayBytePool;
     }
 
-    static int getSizeBoardPool(){
+    static int getSizeBoardPool() {
         return boardPool.size();
     }
 
-    static int getSizePairPool(){
+    static int getSizePairPool() {
         return pairPool.size();
     }
 
-    static int getSizeArrayBoardStatePool(){
+    static int getSizeArrayBoardStatePool() {
         return arrayBoardStatePool.size();
     }
 
-    static int getSizeArrayBytePool(){
+    static int getSizeArrayBytePool() {
         return arrayBytePool.size();
     }
 }
