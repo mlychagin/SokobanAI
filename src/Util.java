@@ -31,17 +31,17 @@ public class Util {
     public static final int hManhattanToAnyGoal = 201;
     public static final int hManhattanToSingleGoal = 202;
 
-    static LinkedList<BoardState> boardPool = new LinkedList<>();
-    static LinkedList<Pair> pairPool = new LinkedList<>();
-    static LinkedList<PairBoardState> pairBoardPool = new LinkedList<>();
-    static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
-    static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
+    private static LinkedList<BoardState> boardPool = new LinkedList<>();
+    private static LinkedList<Pair> pairPool = new LinkedList<>();
+    private static LinkedList<PairBoardState> pairBoardPool = new LinkedList<>();
+    private static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
+    private static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
 
-    static int countBoardPool = 0;
-    static int countPairPool = 0;
-    static int countPairBoardPool = 0;
-    static int countArrayBoardStatePool = 0;
-    static int countArrayBytePool = 0;
+    private static int countBoardPool = 0;
+    private static int countPairPool = 0;
+    private static int countPairBoardPool = 0;
+    private static int countArrayBoardStatePool = 0;
+    private static int countArrayBytePool = 0;
 
     static String byteToString(byte b) {
         switch (b) {
@@ -56,6 +56,92 @@ public class Util {
         }
         return "NULL";
     }
+
+    /*
+     * BoardState Functions
+     */
+
+    public static void setCoordinate(ArrayList<ArrayList<Byte>> board, Pair location, byte slot) {
+        board.get(location.getFirst()).set(location.getSecond(), slot);
+    }
+
+    public static void setCoordinate(ArrayList<ArrayList<Byte>> board, int x, int y, byte slot) {
+        board.get(x).set(y, slot);
+    }
+
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, Pair location) {
+        return board.get(location.getFirst()).get(location.getSecond());
+    }
+
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, int x, int y) {
+        return board.get(x).get(y);
+    }
+
+    public static byte getCoordinate(ArrayList<ArrayList<Byte>> board, Pair location, int offsetRow, int offsetColumn) {
+        return board.get(location.getFirst() + offsetRow).get(location.getSecond() + offsetColumn);
+    }
+
+    public static boolean moveBoxExtraHelper(ArrayList<ArrayList<Byte>> board, Pair startLocation, Pair endLocation, byte direction) {
+        byte ud1 = getCoordinate(board, startLocation, 0, 1);
+        byte ud2 = getCoordinate(board, startLocation, 0, -1);
+        byte ud3 = getCoordinate(board, endLocation, 0, 1);
+        byte ud4 = getCoordinate(board, endLocation, 0, -1);
+
+        byte lr1 = getCoordinate(board, startLocation, 1, 0);
+        byte lr2 = getCoordinate(board, startLocation, -1, 0);
+        byte lr3 = getCoordinate(board, endLocation, 1, 0);
+        byte lr4 = getCoordinate(board, endLocation, -1, 0);
+
+        switch (direction) {
+            case up:
+            case down:
+                if (!(ud1 == wall && ud2 == wall && ud3 == wall && ud4 == wall)) {
+                    return false;
+                }
+                break;
+            case left:
+            case right:
+                if (!(lr1 == wall && lr2 == wall && lr3 == wall && lr4 == wall)) {
+                    return false;
+                }
+                break;
+        }
+        return true;
+    }
+
+    public static int getOffsetColumn(byte direction) {
+        switch (direction) {
+            case Util.up:
+            case Util.down:
+                return 0;
+            case Util.right:
+                return 1;
+            case Util.left:
+                return -1;
+            default:
+                System.out.println("Incorrect Direction");
+        }
+        return 0;
+    }
+
+    public static int getOffsetRow(byte direction) {
+        switch (direction) {
+            case Util.up:
+                return -1;
+            case Util.down:
+                return 1;
+            case Util.right:
+            case Util.left:
+                return 0;
+            default:
+                System.out.println("Incorrect Direction");
+        }
+        return 0;
+    }
+
+    /*
+     * Pooling Functions
+     */
 
     static void recycle(Pair pair) {
         pairPool.add(pair);

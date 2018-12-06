@@ -1,8 +1,8 @@
-import org.omg.CORBA.ARG_IN;
-
 import java.util.*;
 
 public class GameEngine {
+    private HashSet<BoardState> seenStates = new HashSet<>();
+    private PriorityQueue<PairBoardState> pqpbs = new PriorityQueue<>();
     private LinkedList<BoardState> priorityQue = new LinkedList<>();
     private LinkedList<BoardState> intermediatePriorityQue = new LinkedList<>();
     private HashSet<BoardState> intermediateSeenStates = new HashSet<>();
@@ -82,7 +82,7 @@ public class GameEngine {
         for (int i = 0; i < nWalls - 1; i++) {
             int xCoor = (Integer.parseInt(word.next()) - 1);
             int yCoor = (Integer.parseInt(word.next()) - 1);
-            BoardState.setCoordinate(board, xCoor, yCoor, Util.wall);
+            Util.setCoordinate(board, xCoor, yCoor, Util.wall);
         }
     }
 
@@ -218,7 +218,7 @@ public class GameEngine {
         }
     }
 
-    public BoardState parseMoves(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqbps, ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
@@ -243,12 +243,11 @@ public class GameEngine {
             }
             System.out.println("Impossible Random");
         }
-        for (int i = 0; i < possibleMoves.size(); i++) {
-            BoardState move = possibleMoves.get(i);
+        for (BoardState move : possibleMoves) {
             if (!seenStates.contains(move)) {
                 if (searchType == Util.huerisitc) {
                     PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic), move);
-                    pqbps.add(boardPair);
+                    pqpbs.add(boardPair);
                 } else {
                     priorityQue.add(move);
                 }
@@ -260,7 +259,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState nextBoardState(PriorityQueue<PairBoardState> pqpbs, BoardState state, Pair depth, int searchType) {
+    public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
         if (searchType == Util.huerisitc && pqpbs.isEmpty()) return null;
         if (searchType != Util.huerisitc && priorityQue.isEmpty()) return null;
         switch (searchType) {
@@ -291,7 +290,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState initSearch(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs, BoardState startingState, int searchType) {
+    public BoardState initSearch(BoardState startingState, int searchType) {
         seenStates.add(startingState);
         switch (searchType) {
             case Util.bfs:
@@ -311,11 +310,11 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState findSolutionHelper(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs, BoardState startingState, int searchType, int heuristic) {
-        BoardState state = initSearch(seenStates, pqpbs, startingState, searchType);
+    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic) {
+        BoardState state = initSearch(startingState, searchType);
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
-            state = nextBoardState(pqpbs, state, depth, searchType);
+            state = nextBoardState(state, depth, searchType);
             if (state == null) {
                 return null;
             }
@@ -331,7 +330,7 @@ public class GameEngine {
                     return move;
                 }
             }
-            state = parseMoves(seenStates, pqpbs, possibleMoves, searchType, heuristic);
+            state = parseMoves(possibleMoves, searchType, heuristic);
             Util.recycleABS(possibleMoves);
         }
     }
@@ -353,7 +352,7 @@ public class GameEngine {
         return lastMax * lastMax;
     }
 
-    public void cleanUpReset(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs) {
+    public void cleanUpReset() {
         for (BoardState b : priorityQue) {
             seenStates.remove(b);
             Util.recycle(b);
@@ -369,8 +368,8 @@ public class GameEngine {
         pqpbs.clear();
     }
 
-    public void cleanUpAll(HashSet<BoardState> seenStates, PriorityQueue<PairBoardState> pqpbs) {
-        cleanUpReset(seenStates, pqpbs);
+    public void cleanUpAll() {
+        cleanUpReset();
         for (Pair p : whiteSpaces) {
             Util.recycle(p);
         }
@@ -385,13 +384,11 @@ public class GameEngine {
         board.clear();
     }
 
-    public ArrayList<Byte> findSolution(int searchType, int heuristic, boolean fullCleanUp) {
-        HashSet<BoardState> seenStates = new HashSet<>();
-        PriorityQueue<PairBoardState> pqpbs = new PriorityQueue<>();
+    public ArrayList<Byte> findSolution(int searchType, int heuristic) {
         ArrayList<Byte> returnMoves = Util.getArrayByte();
-        BoardState goalState = findSolutionHelper(seenStates, pqpbs, root, searchType, heuristic);
+        BoardState goalState = findSolutionHelper(root, searchType, heuristic);
         while (searchType == Util.random && goalState == null) {
-            goalState = findSolutionHelper(seenStates, pqpbs, root, searchType, heuristic);
+            goalState = findSolutionHelper(root, searchType, heuristic);
         }
 
         BoardState iterState = goalState;
@@ -399,11 +396,7 @@ public class GameEngine {
             returnMoves.addAll(iterState.movesFromParent);
             iterState = iterState.parent;
         }
-        if (fullCleanUp) {
-            cleanUpAll(seenStates, pqpbs);
-        } else {
-            cleanUpReset(seenStates, pqpbs);
-        }
+        cleanUpAll();
         Util.recycle(goalState);
         return returnMoves;
     }
@@ -433,10 +426,10 @@ public class GameEngine {
 
         ArrayList<Pair> removePairs = new ArrayList<>();
         for (Pair p : whiteSpaces) {
-            byte up = BoardState.getCoordinate(board, p.getFirst() + BoardState.getOffsetRow(Util.up), p.getSecond() + BoardState.getOffsetColumn(Util.up));
-            byte down = BoardState.getCoordinate(board, p.getFirst() + BoardState.getOffsetRow(Util.down), p.getSecond() + BoardState.getOffsetColumn(Util.down));
-            byte left = BoardState.getCoordinate(board, p.getFirst() + BoardState.getOffsetRow(Util.left), p.getSecond() + BoardState.getOffsetColumn(Util.left));
-            byte right = BoardState.getCoordinate(board, p.getFirst() + BoardState.getOffsetRow(Util.right), p.getSecond() + BoardState.getOffsetColumn(Util.right));
+            byte up = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.up), p.getSecond() + Util.getOffsetColumn(Util.up));
+            byte down = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.down), p.getSecond() + Util.getOffsetColumn(Util.down));
+            byte left = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.left), p.getSecond() + Util.getOffsetColumn(Util.left));
+            byte right = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.right), p.getSecond() + Util.getOffsetColumn(Util.right));
 
             int count = 0;
             byte finalDir = 0;
@@ -462,11 +455,11 @@ public class GameEngine {
             }
             if (count == 3) {
                 if (root.sokoban.equals(p)) {
-                    root.sokoban.set(p.getFirst() + BoardState.getOffsetRow(finalDir), p.getSecond() + BoardState.getOffsetRow(finalDir));
+                    root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetRow(finalDir));
                     root.movesFromParent.add(finalDir);
                 }
                 if (!goalNodes.contains(p)) {
-                    BoardState.setCoordinate(board, p, Util.wall);
+                    Util.setCoordinate(board, p, Util.wall);
                     removePairs.add(p);
                 }
             }
@@ -493,30 +486,27 @@ public class GameEngine {
     }
 
     public void setDeadPositionsAlgo() {
-        HashSet<BoardState> seenStates = new HashSet<>();
-        PriorityQueue<PairBoardState> pqpbs = new PriorityQueue<>();
         BoardState iterState = root.getChild();
         for (Pair p : iterState.boxPositions) {
             Util.recycle(p);
         }
         iterState.boxPositions.clear();
         for (Pair p : whiteSpaces) {
-            if (BoardState.getCoordinate(board, p) != Util.deadZone && !goalNodes.contains(p)) {
+            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.contains(p)) {
                 iterState.boxPositions.add(p);
-                BoardState solutionBoardState = findSolutionHelper(seenStates, pqpbs, iterState, Util.dfs, Util.hBoxesOnGoal);
+                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
-                    BoardState.setCoordinate(board, p, Util.deadZone);
+                    Util.setCoordinate(board, p, Util.deadZone);
                 } else {
                     Util.recycle(solutionBoardState);
                 }
                 seenStates.remove(iterState);
-                cleanUpReset(seenStates, pqpbs);
+                cleanUpReset();
                 iterState.boxPositions.clear();
             }
         }
         Util.recycle(iterState);
     }
-
 
     public int hblocksOnGoal(BoardState state) {
         int counter = 0;
