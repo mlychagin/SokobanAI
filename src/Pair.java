@@ -1,4 +1,4 @@
-public class Pair {
+public class Pair implements Comparable {
     int first;
     int second;
 
@@ -65,7 +65,9 @@ public class Pair {
         return result;
     }
 
-    public int compareTo(Pair o) {
-        return Integer.compare(this.first, o.first);
+
+    @Override
+    public int compareTo(Object o) {
+        return Integer.compare(this.first, ((Pair)o).first);
     }
 }
