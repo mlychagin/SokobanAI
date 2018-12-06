@@ -529,4 +529,24 @@ public class GameEngine {
     int temp2 = (destination.second - source.second) * (destination.second - source.second);
     return temp1 + temp2;
   }
+
+  public int minMatching(BoardState state)
+  {
+    int i = 0;
+    int j = 0;
+    int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
+    for(Pair p : state.boxPositions)
+    {
+      for(Pair g: goalNodes)
+      {
+//        Calculate real cost
+        cost[i][j] = manhattanDistance(p,g);
+        j++;
+      }
+      j = 0;
+      i++;
+    }
+//    Take the array and find the min matching cost
+    return 0;
+  }
 }
