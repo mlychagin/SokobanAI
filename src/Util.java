@@ -29,9 +29,14 @@ public class Util {
     public static final int random = 104;
 
     public static final int hBoxesOnGoal = 200;
-    public static final int hManhattanToAnyGoal = 201;
+    public static final int hToAnyGoal = 201;
     public static final int hManhattanToSingleGoal = 202;
     public static final int hMoveCost = 203;
+    public static final int hMinMatching = 204;
+
+    public static final int hManhattan = 300;
+    public static final int hEuclidean = 301;
+    public static final int hRealCost = 302;
 
     public static final int maxValueInt = -1;
 

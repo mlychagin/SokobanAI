@@ -363,7 +363,7 @@ public class GameEngine {
             int totalHueristic = 0;
             ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
             for (BoardState boardState : possibleMoves) {
-                PairBoardState boardPair = Util.getPairBoard(calculateHueristic(boardState, heuristic), boardState);
+                PairBoardState boardPair = Util.getPairBoard(calculateHueristic(boardState, heuristic, Util.hManhattan), boardState);
                 totalHueristic += boardPair.getKey();
                 pairBoardStates.add(boardPair);
             }
@@ -386,7 +386,7 @@ public class GameEngine {
         for (BoardState move : possibleMoves) {
             if (!seenStates.contains(move)) {
                 if (searchType == Util.huerisitc) {
-                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic), move);
+                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic, Util.hManhattan), move);
                     pqH.add(boardPair);
                 } else {
                     pq.add(move);
@@ -510,16 +510,18 @@ public class GameEngine {
      * Hueristic Calculations
      */
 
-    public int calculateHueristic(BoardState boardState, int heuristic) {
+    public int calculateHueristic(BoardState boardState, int heuristic, int distanceType) {
         switch (heuristic) {
-            case Util.hManhattanToAnyGoal:
-                return hManhattanToAnyGoal(boardState);
+            case Util.hToAnyGoal:
+                return hToAnyGoal(boardState, distanceType);
             case Util.hBoxesOnGoal:
                 return hblocksOnGoal(boardState);
             case Util.hMoveCost:
                 return hMoveCost(boardState);
+            case Util.hMinMatching:
+                return minMatching(boardState,distanceType);
             default:
-                return hManhattanToSingleGoal(boardState);
+                return hToSingleGoal(boardState, distanceType);
         }
     }
 
@@ -550,27 +552,44 @@ public class GameEngine {
         return counter;
     }
 
-    public int hManhattanToAnyGoal(BoardState state) {
+    public int hToAnyGoal(BoardState state, int type) {
         int totalDistance = 0;
-        int tempDistance = -1;
+        int tempDistance = -2;
         for (Pair p : state.boxPositions) {
             for (Pair g : goalNodes.keySet()) {
-                tempDistance = Math.max(tempDistance, manhattanDistance(p, g));
+
+                switch (type) {
+                    case Util.hManhattan:
+                        tempDistance = Math.max(tempDistance, manhattanDistance(p, g));
+                        break;
+                    case Util.hEuclidean:
+                        tempDistance = Math.max(tempDistance, euclideanDistanceSquared(p, g));
+                        break;
+                    case Util.hRealCost:
+                        tempDistance = Math.max(tempDistance, realDistance(state.sokoban, p, goalNodes.get(g)));
+
+                }
             }
             totalDistance += tempDistance;
-            tempDistance = -1;
+            tempDistance = -2;
         }
         return totalDistance;
     }
 
-    public int hManhattanToSingleGoal(BoardState state) {
+    public int hToSingleGoal(BoardState state, int distanceType) {
         int totalDistance = 0;
         int tempDistance = -1;
         Pair tempGoalPair = new Pair(-1, -1);
         HashSet<Pair> tempGoalNodes = (HashSet) goalNodes.clone();
         for (Pair p : state.boxPositions) {
             for (Pair g : tempGoalNodes) {
-                int dis = manhattanDistance(p, g);
+
+                int dis;
+                if (distanceType == Util.hManhattan) {
+                    dis = manhattanDistance(p, g);
+                } else {
+                    dis = euclideanDistanceSquared(p, g);
+                }
                 if (Math.max(tempDistance, dis) == dis) {
                     tempDistance = dis;
                     tempGoalPair = g;
@@ -614,7 +633,7 @@ public class GameEngine {
         return 0;
     }
 
-    public int minMatching(BoardState state) {
+    public int minMatching(BoardState state, int distance) {
         int i = 0;
         int j = 0;
 
@@ -627,6 +646,17 @@ public class GameEngine {
 
             for (Pair g : goalNodes.keySet()) {
 //        Calculate real cost
+                switch (distance) {
+                    case Util.hManhattan:
+                        boxCosts.add(new Pair(manhattanDistance(p, g), j));
+                        break;
+                    case Util.hEuclidean:
+                        boxCosts.add(new Pair(euclideanDistanceSquared(p, g), j));
+                        break;
+                    case Util.hRealCost:
+                        boxCosts.add(new Pair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
+
+                }
                 boxCosts.add(new Pair(manhattanDistance(p, g), j));
                 System.out.println("The goal is " + j + " " + manhattanDistance(p, g) + " distance");
                 j++;
@@ -647,7 +677,16 @@ public class GameEngine {
         }
         int total = 0;
         for (TreeSet<Pair> treeSet : priority) {
-            total += treeSet.first().first;
+
+            int tempTotal = treeSet.first().first;
+            if(tempTotal == -1)
+            {
+                return Integer.MAX_VALUE;
+            }
+            else
+            {
+                total += tempTotal;
+            }
         }
         System.out.println(total);
         return total;
