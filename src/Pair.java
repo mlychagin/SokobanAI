@@ -43,6 +43,11 @@ public class Pair {
     }
 
     @Override
+    public String toString() {
+        return "(" + first + "," + second + ")";
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -59,6 +64,7 @@ public class Pair {
         result = 31 * result + second;
         return result;
     }
+
     public int compareTo(Pair o) {
         return Integer.compare(this.first, o.first);
     }

@@ -30,6 +30,9 @@ public class Util {
     public static final int hBoxesOnGoal = 200;
     public static final int hManhattanToAnyGoal = 201;
     public static final int hManhattanToSingleGoal = 202;
+    public static final int hMoveCost = 203;
+
+    public static final int maxValueInt = -1;
 
     private static LinkedList<BoardState> boardPool = new LinkedList<>();
     private static LinkedList<Pair> pairPool = new LinkedList<>();
@@ -42,6 +45,9 @@ public class Util {
     private static int countPairBoardPool = 0;
     private static int countArrayBoardStatePool = 0;
     private static int countArrayBytePool = 0;
+
+    Util() {
+    }
 
     static String byteToString(byte b) {
         switch (b) {

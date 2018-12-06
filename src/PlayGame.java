@@ -44,7 +44,8 @@ public class PlayGame {
         engine.setBoxes(inFile.nextLine());
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
-        ArrayList<Byte> solution = engine.findSolution(Util.bfs, Util.hBoxesOnGoal);
+        ArrayList<Byte> solution = Util.getArrayByte();
+        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, true);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -62,7 +63,8 @@ public class PlayGame {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
                 engine.initBoard(inputMap);
-                ArrayList<Byte> solution = engine.findSolution(Util.dfs, Util.hBoxesOnGoal);
+                ArrayList<Byte> solution = Util.getArrayByte();
+                engine.findSolution(solution, Util.dfs, Util.hBoxesOnGoal, true);
                 printSolution(solution);
                 Util.recycleAB(solution);
                 statLeak();

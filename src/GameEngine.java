@@ -6,12 +6,13 @@ public class GameEngine {
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
-    HashMap<Pair, ArrayList<Integer>> distances = new HashMap<>();
+    HashMap<DoublePair, ArrayList<Integer>> distances = new HashMap<>();
     private ArrayList<ArrayList<Byte>> board = new ArrayList<>();
-    static HashSet<Pair> goalNodes = new HashSet<>();
+    static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
     private BoardState root;
     private Random rnd = new Random();
+    Util util = new Util();
 
     public GameEngine() {
     }
@@ -20,15 +21,8 @@ public class GameEngine {
      * Initialization
      */
 
-    public void setDeadlocks() {
-        System.out.println(root.printBoard(board));
-        System.out.flush();
-        setDeadPositions();
-        setWallPositionsOutside();
-        setDeadPositionsAlgo();
-    }
-
     public void initBoard(ArrayList<String> map) {
+        int goalCount = 0;
         root = Util.getBoard();
         for (int i = 0; i < map.size(); i++) {
             String s = map.get(i);
@@ -41,21 +35,24 @@ public class GameEngine {
                         slot = Util.empty;
                         break;
                     case Util.goal:
-                        goalNodes.add(Util.getPair(i, j));
+                        goalNodes.put(Util.getPair(i, j), goalCount);
+                        goalCount++;
                         break;
                     case Util.boxOnGoal:
                         root.addBoxLocation(i, j);
-                        goalNodes.add(Util.getPair(i, j));
+                        goalNodes.put(Util.getPair(i, j), goalCount);
                         slot = Util.goal;
+                        goalCount++;
                         break;
                     case Util.player:
                         root.setPlayerCoordinates(i, j);
                         slot = Util.empty;
                         break;
                     case Util.playerOnGoal:
-                        goalNodes.add(Util.getPair(i, j));
+                        goalNodes.put(Util.getPair(i, j), goalCount);
                         root.setPlayerCoordinates(i, j);
                         slot = Util.player;
+                        goalCount++;
                         break;
                     default:
                         break;
@@ -64,7 +61,7 @@ public class GameEngine {
             }
             board.add(row);
         }
-        setDeadlocks();
+        preComputations();
     }
 
     public void setBoardSize(String line) {
@@ -107,7 +104,7 @@ public class GameEngine {
         for (int i = 0; i < nGoals; i++) {
             int xCoor = (Integer.parseInt(word.next()) - 1);
             int yCoor = (Integer.parseInt(word.next()) - 1);
-            goalNodes.add(Util.getPair(xCoor, yCoor));
+            goalNodes.put(Util.getPair(xCoor, yCoor), i);
         }
     }
 
@@ -116,7 +113,17 @@ public class GameEngine {
         int xCoor = (Integer.parseInt(word.next()) - 1);
         int yCoor = (Integer.parseInt(word.next()) - 1);
         root.setPlayerCoordinates(xCoor, yCoor);
-        setDeadlocks();
+        preComputations();
+    }
+
+    public void preComputations() {
+        System.out.println(root.printBoard(board));
+        System.out.flush();
+        setDeadPositions();
+        setWallPositionsOutside();
+        setDeadPositionsAlgo();
+        setDistances();
+        System.out.flush();
     }
 
     public void setDeadPositions() {
@@ -128,7 +135,7 @@ public class GameEngine {
                 ArrayList<Byte> row = board.get(i);
                 for (int j = 1; j < row.size() - 1; j++) {
                     p.set(i, j);
-                    if (row.get(j) == Util.empty && !goalNodes.contains(p)) {
+                    if (row.get(j) == Util.empty && !goalNodes.containsKey(p)) {
                         if (isDeadLock(row, board.get(i - 1), board.get(i + 1), j)) {
                             row.set(j, Util.deadZone);
                             keepGoing = true;
@@ -155,12 +162,24 @@ public class GameEngine {
         return destinationOfBlock != Util.deadZone && destinationOfBlock != Util.wall && sokoban != Util.wall;
     }
 
-    private void findWhiteSpaces() {
-        BoardState blankState = root.getChild();
-        for (Pair p : blankState.boxPositions) {
-            Util.recycle(p);
+    public void setWallPositionsOutside() {
+        findWhiteSpaces();
+        Pair p = Util.getPair(0, 0);
+        for (int i = 0; i < board.size(); i++) {
+            ArrayList<Byte> row = board.get(i);
+            for (int j = 0; j < row.size(); j++) {
+                p.set(i, j);
+                if (!whiteSpaces.contains(p)) {
+                    row.set(j, Util.wall);
+                }
+            }
         }
-        blankState.boxPositions.clear();
+        Util.recycle(p);
+    }
+
+    private void findWhiteSpaces() {
+        BoardState blankState = Util.getBoard();
+        blankState.sokoban.set(root.sokoban);
         ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
         findPossibleBoxMoves(blankState, possibleMoves, whiteSpaces);
         for (BoardState bs : possibleMoves) {
@@ -203,7 +222,7 @@ public class GameEngine {
                     root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetRow(finalDir));
                     root.movesFromParent.add(finalDir);
                 }
-                if (!goalNodes.contains(p)) {
+                if (!goalNodes.containsKey(p)) {
                     Util.setCoordinate(board, p, Util.wall);
                     removePairs.add(p);
                 }
@@ -215,29 +234,11 @@ public class GameEngine {
         }
     }
 
-    public void setWallPositionsOutside() {
-        findWhiteSpaces();
-        Pair p = Util.getPair(0, 0);
-        for (int i = 0; i < board.size(); i++) {
-            ArrayList<Byte> row = board.get(i);
-            for (int j = 0; j < row.size(); j++) {
-                p.set(i, j);
-                if (!whiteSpaces.contains(p)) {
-                    row.set(j, Util.wall);
-                }
-            }
-        }
-        Util.recycle(p);
-    }
-
     public void setDeadPositionsAlgo() {
-        BoardState iterState = root.getChild();
-        for (Pair p : iterState.boxPositions) {
-            Util.recycle(p);
-        }
-        iterState.boxPositions.clear();
+        BoardState iterState = Util.getBoard();
+        iterState.sokoban.set(root.sokoban);
         for (Pair p : whiteSpaces) {
-            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.contains(p)) {
+            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.containsKey(p)) {
                 iterState.boxPositions.add(p);
                 BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
@@ -251,6 +252,41 @@ public class GameEngine {
             }
         }
         Util.recycle(iterState);
+    }
+
+    public void setDistances() {
+        HashMap<Pair, Integer> saveGoalNodes = goalNodes;
+        BoardState saveRoot = root;
+        goalNodes = new HashMap<>();
+        root = Util.getBoard();
+        root.sokoban.set(saveRoot.sokoban);
+        for (Pair playerLocation : whiteSpaces) {
+            for (Pair boxLocation : whiteSpaces) {
+                if (!playerLocation.equals(boxLocation)) {
+                    if (Util.getCoordinate(board, boxLocation) != Util.deadZone) {
+                        DoublePair key = new DoublePair(playerLocation, boxLocation);
+                        root.addBoxLocation(boxLocation);
+                        ArrayList<Integer> goalDistances = new ArrayList<>();
+                        for (Map.Entry<Pair, Integer> goal : saveGoalNodes.entrySet()) {
+                            goalNodes.put(goal.getKey(), goal.getValue());
+                            while (goalDistances.size() < goal.getValue() + 1) {
+                                goalDistances.add(Util.maxValueInt);
+                            }
+                            ArrayList<Byte> solution = Util.getArrayByte();
+                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, false);
+                            goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
+                            Util.recycleAB(solution);
+                            goalNodes.clear();
+                        }
+                        distances.put(key, goalDistances);
+                        root.boxPositions.clear();
+                    }
+                }
+            }
+        }
+        Util.recycle(root);
+        goalNodes = saveGoalNodes;
+        root = saveRoot;
     }
 
     /*
@@ -431,26 +467,31 @@ public class GameEngine {
         }
     }
 
-    public ArrayList<Byte> findSolution(int searchType, int heuristic) {
-        ArrayList<Byte> returnMoves = Util.getArrayByte();
+    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, boolean fullCleanUp) {
         BoardState goalState = findSolutionHelper(root, searchType, heuristic);
         while (searchType == Util.random && goalState == null) {
             goalState = findSolutionHelper(root, searchType, heuristic);
         }
-
         BoardState iterState = goalState;
         while (iterState != null) {
             returnMoves.addAll(iterState.movesFromParent);
             iterState = iterState.parent;
         }
-        cleanUpAll();
+        if (fullCleanUp) {
+            cleanUpAll();
+        } else {
+            cleanUpReset();
+        }
+        if (goalState == null) {
+            return false;
+        }
         Util.recycle(goalState);
-        return returnMoves;
+        return true;
     }
 
     private boolean isGoalState(BoardState boardState) {
         for (Pair p : boardState.boxPositions) {
-            if (!goalNodes.contains(p)) {
+            if (!goalNodes.containsKey(p)) {
                 return false;
             }
         }
@@ -467,6 +508,8 @@ public class GameEngine {
                 return hManhattanToAnyGoal(boardState);
             case Util.hBoxesOnGoal:
                 return hblocksOnGoal(boardState);
+            case Util.hMoveCost:
+                return hMoveCost(boardState);
             default:
                 return hManhattanToSingleGoal(boardState);
         }
@@ -492,7 +535,7 @@ public class GameEngine {
     public int hblocksOnGoal(BoardState state) {
         int counter = 0;
         for (Pair p : state.boxPositions) {
-            if (goalNodes.contains(p)) {
+            if (goalNodes.containsKey(p)) {
                 counter++;
             }
         }
@@ -503,7 +546,7 @@ public class GameEngine {
         int totalDistance = 0;
         int tempDistance = -1;
         for (Pair p : state.boxPositions) {
-            for (Pair g : goalNodes) {
+            for (Pair g : goalNodes.keySet()) {
                 tempDistance = Math.max(tempDistance, manhattanDistance(p, g));
             }
             totalDistance += tempDistance;
@@ -565,7 +608,7 @@ public class GameEngine {
         HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
         for (Pair p : state.boxPositions) {
             TreeSet<Pair> boxCosts = new TreeSet<>();
-            for (Pair g : goalNodes) {
+            for (Pair g : goalNodes.keySet()) {
 //        Calculate real cost
                 cost[i][j] = manhattanDistance(p, g);
                 boxCosts.add(new Pair(cost[i][j], j));
@@ -643,6 +686,7 @@ public class GameEngine {
      */
 
     public void cleanUpReset() {
+        seenStates.remove(root);
         for (BoardState b : pq) {
             seenStates.remove(b);
             Util.recycle(b);
@@ -663,7 +707,7 @@ public class GameEngine {
         for (Pair p : whiteSpaces) {
             Util.recycle(p);
         }
-        for (Pair p : goalNodes) {
+        for (Pair p : goalNodes.keySet()) {
             Util.recycle(p);
         }
         for (ArrayList<Byte> ab : board) {

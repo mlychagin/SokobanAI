@@ -19,6 +19,10 @@ public class BoardState {
         boxPositions.add(Util.getPair(x, y));
     }
 
+    void addBoxLocation(Pair p) {
+        boxPositions.add(p);
+    }
+
     private void updatePlayerPositionAfterMoving(byte direction) {
         switch (direction) {
             case Util.up:
@@ -37,7 +41,7 @@ public class BoardState {
     }
 
     private void loadBoard(ArrayList<ArrayList<Byte>> board) {
-        for (Pair location : GameEngine.goalNodes) {
+        for (Pair location : GameEngine.goalNodes.keySet()) {
             Util.setCoordinate(board, location, Util.goal);
         }
         for (Pair location : boxPositions) {
@@ -49,7 +53,7 @@ public class BoardState {
         for (Pair location : boxPositions) {
             Util.setCoordinate(board, location, Util.empty);
         }
-        for (Pair location : GameEngine.goalNodes) {
+        for (Pair location : GameEngine.goalNodes.keySet()) {
             Util.setCoordinate(board, location, Util.empty);
         }
     }
