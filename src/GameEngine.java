@@ -523,4 +523,10 @@ public class GameEngine {
     {
       return Math.abs(source.first - destination.first) + Math.abs(source.second - destination.second);
     }
+  private int euclideanDistanceSquared(Pair source, Pair destination)
+  {
+    int temp1 = (destination.first - source.first) * (destination.first - source.first);
+    int temp2 = (destination.second - source.second) * (destination.second - source.second);
+    return temp1 + temp2;
+  }
 }
