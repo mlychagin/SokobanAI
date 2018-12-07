@@ -51,6 +51,19 @@ public class PlayGame {
         statLeak();
     }
 
+    public static boolean checkSolution(GameEngine engine, ArrayList<Byte> solution, ArrayList<String> inputMap) {
+        engine.initHelper(inputMap);
+        BoardState root = engine.root;
+        Collections.reverse(solution);
+        for (byte b : solution) {
+            byte ret = root.move(engine.board, b);
+            if (ret == Util.invalidBoxMove || ret == Util.invalidMove) {
+                return false;
+            }
+        }
+        return engine.isGoalState(root);
+    }
+
     public static void parseFile(String args[]) throws FileNotFoundException {
         ArrayList<String> inputMap = new ArrayList<>();
         Scanner inFile = new Scanner(new FileReader(args[0]));
@@ -62,10 +75,13 @@ public class PlayGame {
             if (line.contains(";")) {
                 System.out.println(line);
                 GameEngine engine = new GameEngine();
-                engine.initBoard(inputMap);
+                engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.huerisitc, Util.hBoxesOnGoal, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, true);
+                System.out.println(solution.size());
                 printSolution(solution);
+                System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");
+                engine.cleanUpAll();
                 Util.recycleAB(solution);
                 statLeak();
                 inputMap.clear();

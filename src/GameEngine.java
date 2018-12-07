@@ -1,16 +1,16 @@
 import java.util.*;
 
 public class GameEngine {
-    private HashSet<BoardState> seenStates = new HashSet<>();
+    private HashMap<BoardState, BoardState> seenStates = new HashMap<>();
     private PriorityQueue<PairBoardState> pqH = new PriorityQueue<>();
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
     private HashMap<DoublePair, ArrayList<Integer>> distances = new HashMap<>();
-    private ArrayList<ArrayList<Byte>> board = new ArrayList<>();
+    ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
-    private BoardState root;
+    BoardState root;
     private Random rnd = new Random();
 
     public GameEngine() {
@@ -20,7 +20,7 @@ public class GameEngine {
      * Initialization
      */
 
-    public void initBoard(ArrayList<String> map) {
+    public void initHelper(ArrayList<String> map) {
         int goalCount = 0;
         root = Util.getBoard();
         for (int i = 0; i < map.size(); i++) {
@@ -60,6 +60,10 @@ public class GameEngine {
             }
             board.add(row);
         }
+    }
+
+    public void initFull(ArrayList<String> map) {
+        initHelper(map);
         preComputations();
     }
 
@@ -117,7 +121,6 @@ public class GameEngine {
 
     public void preComputations() {
         System.out.println(root.printBoard(board));
-        System.out.flush();
         setDeadPositions();
         setWallPositionsOutside();
         setDeadPositionsAlgo();
@@ -242,24 +245,20 @@ public class GameEngine {
     }
 
     public void setDeadPositionsAlgo() {
-        BoardState iterState = Util.getBoard();
-        iterState.sokoban.set(root.sokoban);
         for (Pair p : whiteSpaces) {
             //TODO Root?
             if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.containsKey(p) && !p.equals(root.sokoban)) {
+                BoardState iterState = Util.getBoard();
+                iterState.sokoban.set(root.sokoban);
                 iterState.boxPositions.add(p);
                 BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
                     Util.setCoordinate(board, p, Util.deadZone);
-                } else {
-                    Util.recycle(solutionBoardState);
                 }
-                seenStates.remove(iterState);
-                cleanUpReset();
                 iterState.boxPositions.clear();
+                cleanUpReset();
             }
         }
-        Util.recycle(iterState);
     }
 
     public void setDistances() {
@@ -312,7 +311,7 @@ public class GameEngine {
             BoardState child = state.getChild();
             for (byte i = Util.up; i <= Util.down; i++) {
                 byte moveType = child.move(board, i);
-                if (moveType == Util.invalidMove) {
+                if (moveType == Util.invalidMove || moveType == Util.invalidBoxMove) {
                     continue;
                 }
                 if (!intSeenStates.contains(child)) {
@@ -384,16 +383,34 @@ public class GameEngine {
             System.out.println("Impossible Random");
         }
         for (BoardState move : possibleMoves) {
-            if (!seenStates.contains(move)) {
+            if (!seenStates.containsKey(move)) {
                 if (searchType == Util.huerisitc) {
-                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic), move);
-                    pqH.add(boardPair);
+                    pqH.add(Util.getPairBoard(calculateHueristic(move, heuristic), move));
                 } else {
                     pq.add(move);
                 }
-                seenStates.add(move);
+                seenStates.put(move, move);
             } else {
-                Util.recycle(move);
+                BoardState saved = seenStates.get(move);
+                int savedCost = calculateHueristic(saved, Util.hMoveCost);
+                int newCost = calculateHueristic(move, Util.hMoveCost);
+                if (newCost < savedCost) {
+                    seenStates.remove(saved);
+                    seenStates.put(move, move);
+                    if (searchType == Util.huerisitc) {
+                        //TODO Potentially include hueristic in the BoardState
+                        PairBoardState boardPair = Util.getPairBoard(calculateHueristic(saved, heuristic), saved);
+                        pqH.remove(boardPair);
+                        boardPair.set(calculateHueristic(move, heuristic), move);
+                        pqH.add(boardPair);
+                    } else {
+                        pq.remove(saved);
+                        pq.add(move);
+                    }
+                    Util.recycle(saved);
+                } else {
+                    Util.recycle(move);
+                }
             }
         }
         return null;
@@ -421,7 +438,7 @@ public class GameEngine {
 
                 }
             case Util.huerisitc:
-                return pqH.remove().getBoardState();
+                return pqH.poll().getBoardState();
             case Util.random:
                 return state;
             default:
@@ -431,7 +448,7 @@ public class GameEngine {
     }
 
     public BoardState initSearch(BoardState startingState, int searchType) {
-        seenStates.add(startingState);
+        seenStates.put(startingState, startingState);
         switch (searchType) {
             case Util.bfs:
             case Util.dfs:
@@ -458,18 +475,11 @@ public class GameEngine {
             if (state == null) {
                 return null;
             }
+            if (isGoalState(state)) {
+                return state;
+            }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             findPossibleBoxMoves(state, possibleMoves, null);
-            for (int i = 0; i < possibleMoves.size(); i++) {
-                BoardState move = possibleMoves.get(i);
-                if (isGoalState(move)) {
-                    for (int j = i + 1; j < possibleMoves.size(); j++) {
-                        Util.recycle(possibleMoves.get(j));
-                    }
-                    Util.recycleABS(possibleMoves);
-                    return move;
-                }
-            }
             state = parseMoves(possibleMoves, searchType, heuristic);
             Util.recycleABS(possibleMoves);
         }
@@ -490,14 +500,10 @@ public class GameEngine {
         } else {
             cleanUpReset();
         }
-        if (goalState == null) {
-            return false;
-        }
-        Util.recycle(goalState);
-        return true;
+        return goalState != null;
     }
 
-    private boolean isGoalState(BoardState boardState) {
+    public boolean isGoalState(BoardState boardState) {
         for (Pair p : boardState.boxPositions) {
             if (!goalNodes.containsKey(p)) {
                 return false;
@@ -724,7 +730,7 @@ public class GameEngine {
         for (PairBoardState p : pqH) {
             Util.recycle(p);
         }
-        for (BoardState b : seenStates) {
+        for (BoardState b : seenStates.keySet()) {
             Util.recycle(b);
         }
         pq.clear();

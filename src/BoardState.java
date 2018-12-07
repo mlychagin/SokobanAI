@@ -108,6 +108,8 @@ public class BoardState {
             case Util.boxOnGoal:
                 if (moveBox(board, location, direction)) {
                     returnValue = Util.boxMove;
+                } else {
+                    returnValue = Util.invalidBoxMove;
                 }
                 break;
             case Util.deadZone:
@@ -120,7 +122,7 @@ public class BoardState {
                 break;
         }
         resetBoard(board);
-        if (returnValue != Util.invalidMove) {
+        if (returnValue != Util.invalidMove && returnValue != Util.invalidBoxMove) {
             movesFromParent.add(direction);
         }
         Util.recycle(location);
@@ -213,7 +215,11 @@ public class BoardState {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BoardState that = (BoardState) o;
-        if (!boxPositions.equals(that.boxPositions)) return false;
+        for (Pair p : boxPositions) {
+            if (!that.boxPositions.contains(p)) {
+                return false;
+            }
+        }
         return sokoban.equals(that.sokoban);
     }
 
