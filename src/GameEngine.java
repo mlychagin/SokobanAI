@@ -521,14 +521,14 @@ public class GameEngine {
         switch (heuristic) {
             case Util.hToAnyGoal:
                 return hToAnyGoal(boardState, distanceType);
-            case Util.hBoxesOnGoal:
-                return hblocksOnGoal(boardState);
+            case Util.hToSingleGoal:
+            	return hToSingleGoal(boardState, distanceType);
             case Util.hMoveCost:
                 return hMoveCost(boardState);
             case Util.hMinMatching:
                 return minMatching(boardState,distanceType);
             default:
-                return hToSingleGoal(boardState, distanceType);
+                return hblocksOnGoal(boardState);
         }
     }
 

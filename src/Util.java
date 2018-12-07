@@ -30,7 +30,7 @@ public class Util {
 
     public static final int hBoxesOnGoal = 200;
     public static final int hToAnyGoal = 201;
-    public static final int hManhattanToSingleGoal = 202;
+    public static final int hToSingleGoal = 202; //can't run hRealCost
     public static final int hMoveCost = 203;
     public static final int hMinMatching = 204;
 
