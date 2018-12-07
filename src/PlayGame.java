@@ -56,8 +56,8 @@ public class PlayGame {
         BoardState root = engine.root;
         Collections.reverse(solution);
         for (byte b : solution) {
-            byte ret = root.move(engine.board, b);
-            if (ret == Util.invalidBoxMove || ret == Util.invalidMove) {
+            PairPairByte ret = root.move(engine.board, b);
+            if (ret.returnType == Util.invalidBoxMove || ret.returnType == Util.invalidMove) {
                 return false;
             }
         }
@@ -77,7 +77,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, true);
                 System.out.println(solution.size());
                 printSolution(solution);
                 System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");

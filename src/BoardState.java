@@ -97,36 +97,33 @@ public class BoardState {
         return true;
     }
 
-    public byte move(ArrayList<ArrayList<Byte>> board, byte direction) {
+    public PairPairByte move(ArrayList<ArrayList<Byte>> board, byte direction) {
+        PairPairByte result = new PairPairByte();
         loadBoard(board);
         int offsetRow = Util.getOffsetRow(direction);
         int offsetColumn = Util.getOffsetColumn(direction);
-        byte returnValue = Util.invalidMove;
+        result.returnType = Util.invalidMove;
         Pair location = Util.getPair(sokoban.getFirst() + offsetRow, sokoban.getSecond() + offsetColumn);
         switch (Util.getCoordinate(board, location)) {
             case Util.box:
             case Util.boxOnGoal:
-                if (moveBox(board, location, direction)) {
-                    returnValue = Util.boxMove;
-                } else {
-                    returnValue = Util.invalidBoxMove;
-                }
+                result.returnType = moveBox(board, location, direction) ? Util.boxMove : Util.invalidBoxMove;
                 break;
             case Util.deadZone:
             case Util.empty:
             case Util.goal:
                 updatePlayerPositionAfterMoving(direction);
-                returnValue = Util.playerMove;
+                result.returnType = Util.playerMove;
                 break;
             default:
                 break;
         }
         resetBoard(board);
-        if (returnValue != Util.invalidMove && returnValue != Util.invalidBoxMove) {
+        if (result.returnType != Util.invalidMove && result.returnType != Util.invalidBoxMove) {
             movesFromParent.add(direction);
         }
         Util.recycle(location);
-        return returnValue;
+        return result;
     }
 
     public void loadPlayer(ArrayList<ArrayList<Byte>> board) {

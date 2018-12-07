@@ -310,12 +310,12 @@ public class GameEngine {
             state = intpq.removeFirst();
             BoardState child = state.getChild();
             for (byte i = Util.up; i <= Util.down; i++) {
-                byte moveType = child.move(board, i);
-                if (moveType == Util.invalidMove || moveType == Util.invalidBoxMove) {
+                PairPairByte ret = child.move(board, i);
+                if (ret.returnType == Util.invalidMove || ret.returnType == Util.invalidBoxMove) {
                     continue;
                 }
                 if (!intSeenStates.contains(child)) {
-                    switch (moveType) {
+                    switch (ret.returnType) {
                         case Util.playerMove:
                             intpq.add(child);
                             intSeenStates.add(child);
@@ -633,11 +633,6 @@ public class GameEngine {
             state = state.parent;
         }
         return cost;
-    }
-
-    public int hActualDistanceCost(BoardState state) {
-        //ArrayList<Byte> = findSolution(Util.huerisitc, Util.);
-        return 0;
     }
 
     public int minMatching(BoardState state, int distance) {
