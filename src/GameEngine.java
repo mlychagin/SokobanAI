@@ -254,7 +254,7 @@ public class GameEngine {
                 BoardState iterState = Util.getBoard();
                 iterState.sokoban.set(root.sokoban);
                 iterState.boxPositions.add(p);
-                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
+                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal, Util.hRealCost);
                 if (solutionBoardState == null) {
                     Util.setCoordinate(board, p, Util.deadZone);
                 }
@@ -283,7 +283,7 @@ public class GameEngine {
                                 goalDistances.add(Util.maxValueInt);
                             }
                             ArrayList<Byte> solution = Util.getArrayByte();
-                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, false);
+                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost,false);
                             goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
                             Util.recycleAB(solution);
                             goalNodes.clear();
@@ -362,12 +362,12 @@ public class GameEngine {
         intSeenStates.clear();
     }
 
-    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
-                boardState.hueristicValue = calculateHueristic(boardState, heuristic, Util.hManhattan);
+                boardState.hueristicValue = calculateHueristic(boardState, heuristic, distanceType);
                 totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
@@ -386,7 +386,7 @@ public class GameEngine {
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
                 if (searchType == Util.huerisitc) {
-                    move.hueristicValue = calculateHueristic(move, heuristic, Util.hManhattan);
+                    move.hueristicValue = calculateHueristic(move, heuristic, distanceType);
                     pqH.add(move);
                 } else {
                     pq.add(move);
@@ -458,7 +458,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic) {
+    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic, int distanceType) {
         BoardState state = initSearch(startingState, searchType);
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
@@ -471,15 +471,15 @@ public class GameEngine {
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             findPossibleBoxMoves(state, possibleMoves, null);
-            state = parseMoves(possibleMoves, searchType, heuristic);
+            state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);
         }
     }
 
-    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, boolean fullCleanUp) {
-        BoardState goalState = findSolutionHelper(root, searchType, heuristic);
+    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, int distanceType, boolean fullCleanUp) {
+        BoardState goalState = findSolutionHelper(root, searchType, heuristic,distanceType);
         while (searchType == Util.random && goalState == null) {
-            goalState = findSolutionHelper(root, searchType, heuristic);
+            goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
         }
         BoardState iterState = goalState;
         while (iterState != null) {
@@ -640,7 +640,8 @@ public class GameEngine {
                         boxCosts.add(Util.getPair(euclideanDistanceSquared(p, g), j));
                         break;
                     case Util.hRealCost:
-                        boxCosts.add(Util.getPair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
+                        Pair pair = Util.getPair(realDistance(state.sokoban, p, goalNodes.get(g)), j);
+                        boxCosts.add(pair);
 
                 }
                 j++;
@@ -655,9 +656,9 @@ public class GameEngine {
         int total = 0;
         for (PriorityQueue<Pair> treeSet : priority) {
             int tempTotal = treeSet.peek().first;
-            if (tempTotal == -1) {
-                return Integer.MAX_VALUE;
-            } else {
+            if (tempTotal == Integer.MAX_VALUE) {
+                total =  Integer.MAX_VALUE;
+            } else if(total != Integer.MAX_VALUE){
                 total += tempTotal;
             }
             for(Pair p : treeSet)
