@@ -10,6 +10,9 @@ public class GameEngine {
     ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
+
+    private ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
+    private HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
     BoardState root;
     private Random rnd = new Random();
 
@@ -625,20 +628,19 @@ public class GameEngine {
     public int minMatching(BoardState state, int distance) {
         int i = 0;
         int j = 0;
-        ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
-        HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
+
         for (Pair p : state.boxPositions) {
-            PriorityQueue<Pair> boxCosts = new PriorityQueue<>();
+            PriorityQueue<Pair> boxCosts = Util.getPriorityQueue();
             for (Pair g : goalNodes.keySet()) {
                 switch (distance) {
                     case Util.hManhattan:
-                        boxCosts.add(new Pair(manhattanDistance(p, g), j));
+                        boxCosts.add(Util.getPair(manhattanDistance(p, g), j));
                         break;
                     case Util.hEuclidean:
-                        boxCosts.add(new Pair(euclideanDistanceSquared(p, g), j));
+                        boxCosts.add(Util.getPair(euclideanDistanceSquared(p, g), j));
                         break;
                     case Util.hRealCost:
-                        boxCosts.add(new Pair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
+                        boxCosts.add(Util.getPair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
 
                 }
                 j++;
@@ -658,7 +660,14 @@ public class GameEngine {
             } else {
                 total += tempTotal;
             }
+            for(Pair p : treeSet)
+            {
+                Util.recycle(p);
+            }
+            Util.recyclePriority(treeSet);
         }
+        priority.clear();
+        goalToBox.clear();
         return total;
     }
 
@@ -689,11 +698,11 @@ public class GameEngine {
             }
             if (currentNextPair == null) {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             } else if (conflictNext == null) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
 
@@ -701,12 +710,12 @@ public class GameEngine {
             int currentDifferenceInValue = currentNextPair.first - currentMinPair.first;
             int conflictDifferenceInValue = conflictNext.first - conflictMinPair.first;
             if (currentDifferenceInValue > conflictDifferenceInValue) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
             } else {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             }

@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 public class Util {
     public static final byte up = 1;
@@ -46,11 +47,13 @@ public class Util {
     private static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
     private static LinkedList<PairPairByte> pairPairBytePool = new LinkedList<>();
 
+    private static LinkedList<PriorityQueue<Pair>> priorityQueuePool = new LinkedList<>();
     private static int countBoardPool = 0;
     private static int countPairPool = 0;
     private static int countArrayBoardStatePool = 0;
     private static int countArrayBytePool = 0;
     private static int countPairPairBytePool = 0;
+    private static int countPriorityQueuePool = 0;
 
     Util() {
     }
@@ -205,6 +208,20 @@ public class Util {
         }
         countArrayBoardStatePool++;
         return new ArrayList<>();
+    }
+    static PriorityQueue<Pair> getPriorityQueue()
+    {
+        if(!priorityQueuePool.isEmpty())
+        {
+            return priorityQueuePool.poll();
+        }
+        countPriorityQueuePool ++;
+        return new PriorityQueue<>();
+
+    }
+    static void recyclePriority(PriorityQueue<Pair> queue) {
+        queue.clear();
+        priorityQueuePool.add(queue);
     }
 
     static void recycleAB(ArrayList<Byte> arrayByte) {
