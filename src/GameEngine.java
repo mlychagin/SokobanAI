@@ -640,11 +640,11 @@ public class GameEngine {
         int j = 0;
 
         int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
-        ArrayList<TreeSet<Pair>> priority = new ArrayList<>();
+        ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
         HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
         for (Pair p : state.boxPositions) {
-            TreeSet<Pair> boxCosts = new TreeSet<>();
-            System.out.println("The box is " + i);
+            PriorityQueue<Pair> boxCosts = new PriorityQueue<>();
+//            System.out.println("The box is " + i);
 
             for (Pair g : goalNodes.keySet()) {
 //        Calculate real cost
@@ -659,8 +659,8 @@ public class GameEngine {
                         boxCosts.add(new Pair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
 
                 }
-                boxCosts.add(new Pair(manhattanDistance(p, g), j));
-                System.out.println("The goal is " + j + " " + manhattanDistance(p, g) + " distance");
+//                boxCosts.add(new Pair(manhattanDistance(p, g), j));
+//                System.out.println("The goal is " + j + " " + manhattanDistance(p, g) + " distance");
                 j++;
             }
             priority.add(boxCosts);
@@ -670,17 +670,17 @@ public class GameEngine {
 
 //    Take the array and find the min matching cost
         for (int k = 0; k < priority.size(); k++) {
-            System.out.println(k + "k is ");
+//            System.out.println(k + "k is ");
             resolveConflicts(priority, goalToBox, k);
         }
 
-        for (Integer in : goalToBox.keySet()) {
-            System.out.println(" Goal is " + in + " Box is " + goalToBox.get(in));
-        }
+//        for (Integer in : goalToBox.keySet()) {
+////            System.out.println(" Goal is " + in + " Box is " + goalToBox.get(in));
+//        }
         int total = 0;
-        for (TreeSet<Pair> treeSet : priority) {
+        for (PriorityQueue<Pair> treeSet : priority) {
 
-            int tempTotal = treeSet.first().first;
+            int tempTotal = treeSet.peek().first;
             if(tempTotal == -1)
             {
                 return Integer.MAX_VALUE;
@@ -690,17 +690,18 @@ public class GameEngine {
                 total += tempTotal;
             }
         }
-        System.out.println(total);
+//        System.out.println(total);
         return total;
     }
 
-    private void resolveConflicts(ArrayList<TreeSet<Pair>> priority, HashMap<Integer, Integer> goalToBox, int boxNum) {
-        TreeSet<Pair> currentBoxSet = priority.get(boxNum);
-        Pair currentMinPair = currentBoxSet.first();
+    private void resolveConflicts(ArrayList<PriorityQueue<Pair>> priority, HashMap<Integer, Integer> goalToBox, int boxNum) {
+        PriorityQueue<Pair> currentBoxSet = priority.get(boxNum);
+//        System.out.println("Box num " + boxNum);
+        Pair currentMinPair = currentBoxSet.peek();
         if (goalToBox.containsKey(currentMinPair.second)) {
             int conflictBoxNum = goalToBox.get(currentMinPair.second);
-            TreeSet<Pair> conflictBoxSet = priority.get(conflictBoxNum);
-            Pair conflictMinPair = conflictBoxSet.first();
+            PriorityQueue<Pair> conflictBoxSet = priority.get(conflictBoxNum);
+            Pair conflictMinPair = conflictBoxSet.peek();
 
             Iterator<Pair> currentIter = currentBoxSet.iterator();
             Iterator<Pair> conflictIter = conflictBoxSet.iterator();
@@ -708,8 +709,11 @@ public class GameEngine {
             Pair conflictNext = null;
             for (int i = 0; i < 2; i++) {
 
+
                 if (currentIter.hasNext()) {
+
                     currentNextPair = currentIter.next();
+//                    System.out.println(currentNextPair.first);
                 } else {
                     currentNextPair = null;
                 }
@@ -720,13 +724,18 @@ public class GameEngine {
 
                 }
             }
+//            System.out.println("Current set");
+//            for(Pair t : currentBoxSet)
+//            {
+//                System.out.println(t.second);
+//            }
             if (currentNextPair == null) {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.pollFirst();
+                conflictBoxSet.poll();
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             } else if (conflictNext == null) {
-                currentBoxSet.pollFirst();
+                currentBoxSet.poll();
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
 
@@ -734,15 +743,19 @@ public class GameEngine {
             int currentDifferenceInValue = currentNextPair.first - currentMinPair.first;
             int conflictDifferenceInValue = conflictNext.first - conflictMinPair.first;
 
+//            System.out.println("Current Difference");
+//            System.out.println(currentDifferenceInValue);
+//            System.out.println("Conflict difference");
+//            System.out.println(conflictDifferenceInValue);
             if (currentDifferenceInValue > conflictDifferenceInValue) {
-                currentBoxSet.pollFirst();
+                currentBoxSet.poll();
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
             } else {
                 goalToBox.replace(currentMinPair.second, boxNum);
 //                System.out.println(currentMinPair.second + " is the goal and box num is  " +  conflictBoxNum);
 
-                conflictBoxSet.pollFirst();
+                conflictBoxSet.poll();
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             }
