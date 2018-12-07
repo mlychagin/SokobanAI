@@ -2,7 +2,7 @@ import java.util.*;
 
 public class GameEngine {
     private HashMap<BoardState, BoardState> seenStates = new HashMap<>();
-    private PriorityQueue<PairBoardState> pqH = new PriorityQueue<>();
+    private PriorityQueue<BoardState> pqH = new PriorityQueue<>();
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
@@ -10,6 +10,9 @@ public class GameEngine {
     ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
+
+    private ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
+    private HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
     BoardState root;
     private Random rnd = new Random();
 
@@ -251,7 +254,7 @@ public class GameEngine {
                 BoardState iterState = Util.getBoard();
                 iterState.sokoban.set(root.sokoban);
                 iterState.boxPositions.add(p);
-                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
+                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal, Util.hRealCost);
                 if (solutionBoardState == null) {
                     Util.setCoordinate(board, p, Util.deadZone);
                 }
@@ -280,7 +283,7 @@ public class GameEngine {
                                 goalDistances.add(Util.maxValueInt);
                             }
                             ArrayList<Byte> solution = Util.getArrayByte();
-                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, false);
+                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost,false);
                             goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
                             Util.recycleAB(solution);
                             goalNodes.clear();
@@ -310,12 +313,13 @@ public class GameEngine {
             state = intpq.removeFirst();
             BoardState child = state.getChild();
             for (byte i = Util.up; i <= Util.down; i++) {
-                byte moveType = child.move(board, i);
-                if (moveType == Util.invalidMove || moveType == Util.invalidBoxMove) {
+                PairPairByte ret = child.move(board, i);
+                if (ret.returnType == Util.invalidMove || ret.returnType == Util.invalidBoxMove) {
+                    Util.recycle(ret);
                     continue;
                 }
                 if (!intSeenStates.contains(child)) {
-                    switch (moveType) {
+                    switch (ret.returnType) {
                         case Util.playerMove:
                             intpq.add(child);
                             intSeenStates.add(child);
@@ -346,6 +350,7 @@ public class GameEngine {
                     Util.recycle(child);
                 }
                 child = state.getChild();
+                Util.recycle(ret);
             }
             Util.recycle(child);
         }
@@ -357,27 +362,23 @@ public class GameEngine {
         intSeenStates.clear();
     }
 
-    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
         if (searchType == Util.random) {
             int totalHueristic = 0;
-            ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
+            ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
-                PairBoardState boardPair = Util.getPairBoard(calculateHueristic(boardState, heuristic, Util.hManhattan), boardState);
-                totalHueristic += boardPair.getKey();
-                pairBoardStates.add(boardPair);
+                boardState.hueristicValue = calculateHueristic(boardState, heuristic, distanceType);
+                totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
-            for (PairBoardState pairBoardState : pairBoardStates) {
-                solution -= pairBoardState.getKey();
+            for (BoardState boardState : boardStates) {
+                solution -= boardState.hueristicValue;
                 if (solution <= 0) {
-                    pairBoardStates.remove(pairBoardState);
-                    for (PairBoardState removePBS : pairBoardStates) {
-                        Util.recycle(removePBS.getBoardState());
-                        Util.recycle(removePBS);
+                    boardStates.remove(boardState);
+                    for (BoardState removeBS : boardStates) {
+                        Util.recycle(removeBS);
                     }
-                    BoardState returnBoardState = pairBoardState.getBoardState();
-                    Util.recycle(pairBoardState);
-                    return returnBoardState;
+                    return boardState;
                 }
             }
             System.out.println("Impossible Random");
@@ -385,8 +386,8 @@ public class GameEngine {
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
                 if (searchType == Util.huerisitc) {
-                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic, Util.hManhattan), move);
-                    pqH.add(boardPair);
+                    move.hueristicValue = calculateHueristic(move, heuristic, distanceType);
+                    pqH.add(move);
                 } else {
                     pq.add(move);
                 }
@@ -396,22 +397,11 @@ public class GameEngine {
                 int savedCost = calculateHueristic(saved, Util.hMoveCost, Util.hManhattan);
                 int newCost = calculateHueristic(move, Util.hMoveCost, Util.hManhattan);
                 if (newCost < savedCost) {
-                    seenStates.remove(saved);
-                    seenStates.put(move, move);
-                    if (searchType == Util.huerisitc) {
-                        //TODO Potentially include hueristic in the BoardState
-                        PairBoardState boardPair = Util.getPairBoard(calculateHueristic(saved, heuristic, Util.hManhattan), saved);
-                        pqH.remove(boardPair);
-                        boardPair.set(calculateHueristic(move, heuristic, Util.hManhattan), move);
-                        pqH.add(boardPair);
-                    } else {
-                        pq.remove(saved);
-                        pq.add(move);
-                    }
-                    Util.recycle(saved);
-                } else {
-                    Util.recycle(move);
+                    saved.parent = move.parent;
+                    saved.movesFromParent.clear();
+                    saved.movesFromParent.addAll(move.movesFromParent);
                 }
+                Util.recycle(move);
             }
         }
         return null;
@@ -439,7 +429,7 @@ public class GameEngine {
 
                 }
             case Util.huerisitc:
-                return pqH.poll().getBoardState();
+                return pqH.poll();
             case Util.random:
                 return state;
             default:
@@ -457,7 +447,7 @@ public class GameEngine {
                 pq.add(startingState);
                 break;
             case Util.huerisitc:
-                pqH.add(Util.getPairBoard(0, startingState));
+                pqH.add(startingState);
                 break;
             case Util.random:
                 seenStates.remove(startingState);
@@ -468,7 +458,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic) {
+    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic, int distanceType) {
         BoardState state = initSearch(startingState, searchType);
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
@@ -481,15 +471,15 @@ public class GameEngine {
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             findPossibleBoxMoves(state, possibleMoves, null);
-            state = parseMoves(possibleMoves, searchType, heuristic);
+            state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);
         }
     }
 
-    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, boolean fullCleanUp) {
-        BoardState goalState = findSolutionHelper(root, searchType, heuristic);
+    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, int distanceType, boolean fullCleanUp) {
+        BoardState goalState = findSolutionHelper(root, searchType, heuristic,distanceType);
         while (searchType == Util.random && goalState == null) {
-            goalState = findSolutionHelper(root, searchType, heuristic);
+            goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
         }
         BoardState iterState = goalState;
         while (iterState != null) {
@@ -521,12 +511,12 @@ public class GameEngine {
         switch (heuristic) {
             case Util.hToAnyGoal:
                 return hToAnyGoal(boardState, distanceType);
-            case Util.hToSingleGoal:
-            	return hToSingleGoal(boardState, distanceType);
+            case Util.hSingleGoal:
+                return hToSingleGoal(boardState, distanceType);
             case Util.hMoveCost:
                 return hMoveCost(boardState);
             case Util.hMinMatching:
-                return minMatching(boardState,distanceType);
+                return minMatching(boardState, distanceType);
             default:
                 return hblocksOnGoal(boardState);
         }
@@ -635,73 +625,55 @@ public class GameEngine {
         return cost;
     }
 
-    public int hActualDistanceCost(BoardState state) {
-        //ArrayList<Byte> = findSolution(Util.huerisitc, Util.);
-        return 0;
-    }
-
     public int minMatching(BoardState state, int distance) {
         int i = 0;
         int j = 0;
 
-        int[][] cost = new int[state.boxPositions.size()][goalNodes.size()];
-        ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
-        HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
         for (Pair p : state.boxPositions) {
-            PriorityQueue<Pair> boxCosts = new PriorityQueue<>();
-//            System.out.println("The box is " + i);
-
+            PriorityQueue<Pair> boxCosts = Util.getPriorityQueue();
             for (Pair g : goalNodes.keySet()) {
-//        Calculate real cost
                 switch (distance) {
                     case Util.hManhattan:
-                        boxCosts.add(new Pair(manhattanDistance(p, g), j));
+                        boxCosts.add(Util.getPair(manhattanDistance(p, g), j));
                         break;
                     case Util.hEuclidean:
-                        boxCosts.add(new Pair(euclideanDistanceSquared(p, g), j));
+                        boxCosts.add(Util.getPair(euclideanDistanceSquared(p, g), j));
                         break;
                     case Util.hRealCost:
-                        boxCosts.add(new Pair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
+                        Pair pair = Util.getPair(realDistance(state.sokoban, p, goalNodes.get(g)), j);
+                        boxCosts.add(pair);
 
                 }
-//                boxCosts.add(new Pair(manhattanDistance(p, g), j));
-//                System.out.println("The goal is " + j + " " + manhattanDistance(p, g) + " distance");
                 j++;
             }
             priority.add(boxCosts);
             j = 0;
             i++;
         }
-
-//    Take the array and find the min matching cost
         for (int k = 0; k < priority.size(); k++) {
-//            System.out.println(k + "k is ");
             resolveConflicts(priority, goalToBox, k);
         }
-
-//        for (Integer in : goalToBox.keySet()) {
-////            System.out.println(" Goal is " + in + " Box is " + goalToBox.get(in));
-//        }
         int total = 0;
         for (PriorityQueue<Pair> treeSet : priority) {
-
             int tempTotal = treeSet.peek().first;
-            if(tempTotal == -1)
-            {
-                return Integer.MAX_VALUE;
-            }
-            else
-            {
+            if (tempTotal == Integer.MAX_VALUE) {
+                total =  Integer.MAX_VALUE;
+            } else if(total != Integer.MAX_VALUE){
                 total += tempTotal;
             }
+            for(Pair p : treeSet)
+            {
+                Util.recycle(p);
+            }
+            Util.recyclePriority(treeSet);
         }
-//        System.out.println(total);
+        priority.clear();
+        goalToBox.clear();
         return total;
     }
 
     private void resolveConflicts(ArrayList<PriorityQueue<Pair>> priority, HashMap<Integer, Integer> goalToBox, int boxNum) {
         PriorityQueue<Pair> currentBoxSet = priority.get(boxNum);
-//        System.out.println("Box num " + boxNum);
         Pair currentMinPair = currentBoxSet.peek();
         if (goalToBox.containsKey(currentMinPair.second)) {
             int conflictBoxNum = goalToBox.get(currentMinPair.second);
@@ -713,12 +685,8 @@ public class GameEngine {
             Pair currentNextPair = null;
             Pair conflictNext = null;
             for (int i = 0; i < 2; i++) {
-
-
                 if (currentIter.hasNext()) {
-
                     currentNextPair = currentIter.next();
-//                    System.out.println(currentNextPair.first);
                 } else {
                     currentNextPair = null;
                 }
@@ -729,45 +697,31 @@ public class GameEngine {
 
                 }
             }
-//            System.out.println("Current set");
-//            for(Pair t : currentBoxSet)
-//            {
-//                System.out.println(t.second);
-//            }
             if (currentNextPair == null) {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             } else if (conflictNext == null) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
 
             }
             int currentDifferenceInValue = currentNextPair.first - currentMinPair.first;
             int conflictDifferenceInValue = conflictNext.first - conflictMinPair.first;
-
-//            System.out.println("Current Difference");
-//            System.out.println(currentDifferenceInValue);
-//            System.out.println("Conflict difference");
-//            System.out.println(conflictDifferenceInValue);
             if (currentDifferenceInValue > conflictDifferenceInValue) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
             } else {
                 goalToBox.replace(currentMinPair.second, boxNum);
-//                System.out.println(currentMinPair.second + " is the goal and box num is  " +  conflictBoxNum);
-
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             }
-
         }
         goalToBox.put(currentMinPair.second, boxNum);
-//        System.out.println(currentMinPair.second + " is the goal and box num is  " +  boxNum);
     }
 
     /*
@@ -780,8 +734,9 @@ public class GameEngine {
             seenStates.remove(b);
             Util.recycle(b);
         }
-        for (PairBoardState p : pqH) {
-            Util.recycle(p);
+        for (BoardState b : pqH) {
+            seenStates.remove(b);
+            Util.recycle(b);
         }
         for (BoardState b : seenStates.keySet()) {
             Util.recycle(b);
@@ -806,16 +761,5 @@ public class GameEngine {
         goalNodes.clear();
         board.clear();
     }
-
-//    public static void main(String args[]) {
-//        GameEngine engine = new GameEngine();
-//        BoardState state = new BoardState();
-//        for (int i = 0; i < 3; i++) {
-//
-//            state.addBoxLocation(new Pair(i, i * 2));
-//            GameEngine.goalNodes.put(new Pair(i + 10, i + 20), i);
-//        }
-//        engine.minMatching(state);
-//    }
 }
 

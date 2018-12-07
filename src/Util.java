@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 public class Util {
     public static final byte up = 1;
@@ -31,6 +32,7 @@ public class Util {
     public static final int hBoxesOnGoal = 200;
     public static final int hToAnyGoal = 201;
     public static final int hToSingleGoal = 202; //can't run hRealCost
+
     public static final int hMoveCost = 203;
     public static final int hMinMatching = 204;
 
@@ -38,19 +40,21 @@ public class Util {
     public static final int hEuclidean = 301;
     public static final int hRealCost = 302;
 
-    public static final int maxValueInt = -1;
+    public static final int maxValueInt = Integer.MAX_VALUE;
 
     private static LinkedList<BoardState> boardPool = new LinkedList<>();
     private static LinkedList<Pair> pairPool = new LinkedList<>();
-    private static LinkedList<PairBoardState> pairBoardPool = new LinkedList<>();
     private static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
     private static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
+    private static LinkedList<PairPairByte> pairPairBytePool = new LinkedList<>();
 
+    private static LinkedList<PriorityQueue<Pair>> priorityQueuePool = new LinkedList<>();
     private static int countBoardPool = 0;
     private static int countPairPool = 0;
-    private static int countPairBoardPool = 0;
     private static int countArrayBoardStatePool = 0;
     private static int countArrayBytePool = 0;
+    private static int countPairPairBytePool = 0;
+    private static int countPriorityQueuePool = 0;
 
     Util() {
     }
@@ -169,6 +173,18 @@ public class Util {
         return new Pair(x, y);
     }
 
+    static void recycle(PairPairByte pair) {
+        pairPairBytePool.add(pair);
+    }
+
+    static PairPairByte getPairPairByte() {
+        if (!pairPairBytePool.isEmpty()) {
+            return pairPairBytePool.poll();
+        }
+        countPairPairBytePool++;
+        return new PairPairByte();
+    }
+
     static void recycle(BoardState state) {
         state.reset();
         boardPool.add(state);
@@ -194,6 +210,20 @@ public class Util {
         countArrayBoardStatePool++;
         return new ArrayList<>();
     }
+    static PriorityQueue<Pair> getPriorityQueue()
+    {
+        if(!priorityQueuePool.isEmpty())
+        {
+            return priorityQueuePool.poll();
+        }
+        countPriorityQueuePool ++;
+        return new PriorityQueue<>();
+
+    }
+    static void recyclePriority(PriorityQueue<Pair> queue) {
+        queue.clear();
+        priorityQueuePool.add(queue);
+    }
 
     static void recycleAB(ArrayList<Byte> arrayByte) {
         arrayByte.clear();
@@ -206,21 +236,6 @@ public class Util {
         }
         countArrayBytePool++;
         return new ArrayList<>();
-    }
-
-    static void recycle(PairBoardState state) {
-        state.reset();
-        pairBoardPool.add(state);
-    }
-
-    static PairBoardState getPairBoard(int key, BoardState board) {
-        if (!pairBoardPool.isEmpty()) {
-            PairBoardState b = pairBoardPool.poll();
-            b.set(key, board);
-            return b;
-        }
-        countPairBoardPool++;
-        return new PairBoardState(key, board);
     }
 
     static int getCountBoardPool() {
@@ -253,5 +268,20 @@ public class Util {
 
     static int getSizeArrayBytePool() {
         return arrayBytePool.size();
+    }
+
+    static int getCountPairPairBytePool(){
+        return countPairPairBytePool;
+    }
+
+    static int getSizePairPairBytePool(){
+        return pairPairBytePool.size();
+    }
+    static int getSizePriorityPool()
+    {
+        return priorityQueuePool.size();
+    }
+    static int getCountPriorityQueuePool(){
+        return countPriorityQueuePool;
     }
 }

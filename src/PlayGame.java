@@ -32,6 +32,13 @@ public class PlayGame {
 
         int countABP = Util.getCountArrayBytePool();
         int sizeABP = Util.getSizeArrayBytePool();
+
+        int countPPBP = Util.getCountPairPairBytePool();
+        int sizePPBP = Util.getSizePairPairBytePool();
+
+        int countPQP = Util.getCountPriorityQueuePool();
+        int sizePQP = Util.getSizePriorityPool();
+
         System.out.flush();
         System.out.flush();
     }
@@ -45,7 +52,7 @@ public class PlayGame {
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = Util.getArrayByte();
-        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, true);
+        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, Util.hRealCost,true);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -56,10 +63,11 @@ public class PlayGame {
         BoardState root = engine.root;
         Collections.reverse(solution);
         for (byte b : solution) {
-            byte ret = root.move(engine.board, b);
-            if (ret == Util.invalidBoxMove || ret == Util.invalidMove) {
+            PairPairByte ret = root.move(engine.board, b);
+            if (ret.returnType == Util.invalidBoxMove || ret.returnType == Util.invalidMove) {
                 return false;
             }
+            Util.recycle(ret);
         }
         return engine.isGoalState(root);
     }
@@ -77,7 +85,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, Util.hRealCost ,true);
                 System.out.println(solution.size());
                 printSolution(solution);
                 System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");
