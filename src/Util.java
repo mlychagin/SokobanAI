@@ -30,7 +30,7 @@ public class Util {
 
     public static final int hBoxesOnGoal = 200;
     public static final int hToAnyGoal = 201;
-    public static final int hManhattanToSingleGoal = 202;
+    public static final int hSingleGoal = 202;
     public static final int hMoveCost = 203;
     public static final int hMinMatching = 204;
 
@@ -45,6 +45,7 @@ public class Util {
     private static LinkedList<PairBoardState> pairBoardPool = new LinkedList<>();
     private static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
     private static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
+    private static LinkedList<> arrayBytePool = new LinkedList<>();
 
     private static int countBoardPool = 0;
     private static int countPairPool = 0;
