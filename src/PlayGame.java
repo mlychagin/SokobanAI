@@ -32,6 +32,9 @@ public class PlayGame {
 
         int countABP = Util.getCountArrayBytePool();
         int sizeABP = Util.getSizeArrayBytePool();
+
+        int countPPBP = Util.getCountPairPairBytePool();
+        int sizePPBP = Util.getSizePairPairBytePool();
         System.out.flush();
         System.out.flush();
     }
@@ -60,6 +63,7 @@ public class PlayGame {
             if (ret.returnType == Util.invalidBoxMove || ret.returnType == Util.invalidMove) {
                 return false;
             }
+            Util.recycle(ret);
         }
         return engine.isGoalState(root);
     }
@@ -77,7 +81,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, true);
                 System.out.println(solution.size());
                 printSolution(solution);
                 System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");

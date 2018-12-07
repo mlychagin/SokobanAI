@@ -2,7 +2,7 @@ import java.util.*;
 
 public class GameEngine {
     private HashMap<BoardState, BoardState> seenStates = new HashMap<>();
-    private PriorityQueue<PairBoardState> pqH = new PriorityQueue<>();
+    private PriorityQueue<BoardState> pqH = new PriorityQueue<>();
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
@@ -312,6 +312,7 @@ public class GameEngine {
             for (byte i = Util.up; i <= Util.down; i++) {
                 PairPairByte ret = child.move(board, i);
                 if (ret.returnType == Util.invalidMove || ret.returnType == Util.invalidBoxMove) {
+                    Util.recycle(ret);
                     continue;
                 }
                 if (!intSeenStates.contains(child)) {
@@ -346,6 +347,7 @@ public class GameEngine {
                     Util.recycle(child);
                 }
                 child = state.getChild();
+                Util.recycle(ret);
             }
             Util.recycle(child);
         }
@@ -360,24 +362,20 @@ public class GameEngine {
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
         if (searchType == Util.random) {
             int totalHueristic = 0;
-            ArrayList<PairBoardState> pairBoardStates = new ArrayList<>();
+            ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
-                PairBoardState boardPair = Util.getPairBoard(calculateHueristic(boardState, heuristic, Util.hManhattan), boardState);
-                totalHueristic += boardPair.getKey();
-                pairBoardStates.add(boardPair);
+                boardState.hueristicValue = calculateHueristic(boardState, heuristic, Util.hManhattan);
+                totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
-            for (PairBoardState pairBoardState : pairBoardStates) {
-                solution -= pairBoardState.getKey();
+            for (BoardState boardState : boardStates) {
+                solution -= boardState.hueristicValue;
                 if (solution <= 0) {
-                    pairBoardStates.remove(pairBoardState);
-                    for (PairBoardState removePBS : pairBoardStates) {
-                        Util.recycle(removePBS.getBoardState());
-                        Util.recycle(removePBS);
+                    boardStates.remove(boardState);
+                    for (BoardState removeBS : boardStates) {
+                        Util.recycle(removeBS);
                     }
-                    BoardState returnBoardState = pairBoardState.getBoardState();
-                    Util.recycle(pairBoardState);
-                    return returnBoardState;
+                    return boardState;
                 }
             }
             System.out.println("Impossible Random");
@@ -385,8 +383,8 @@ public class GameEngine {
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
                 if (searchType == Util.huerisitc) {
-                    PairBoardState boardPair = Util.getPairBoard(calculateHueristic(move, heuristic, Util.hManhattan), move);
-                    pqH.add(boardPair);
+                    move.hueristicValue = calculateHueristic(move, heuristic, Util.hManhattan);
+                    pqH.add(move);
                 } else {
                     pq.add(move);
                 }
@@ -396,22 +394,11 @@ public class GameEngine {
                 int savedCost = calculateHueristic(saved, Util.hMoveCost, Util.hManhattan);
                 int newCost = calculateHueristic(move, Util.hMoveCost, Util.hManhattan);
                 if (newCost < savedCost) {
-                    seenStates.remove(saved);
-                    seenStates.put(move, move);
-                    if (searchType == Util.huerisitc) {
-                        //TODO Potentially include hueristic in the BoardState
-                        PairBoardState boardPair = Util.getPairBoard(calculateHueristic(saved, heuristic, Util.hManhattan), saved);
-                        pqH.remove(boardPair);
-                        boardPair.set(calculateHueristic(move, heuristic, Util.hManhattan), move);
-                        pqH.add(boardPair);
-                    } else {
-                        pq.remove(saved);
-                        pq.add(move);
-                    }
-                    Util.recycle(saved);
-                } else {
-                    Util.recycle(move);
+                    saved.parent = move.parent;
+                    saved.movesFromParent.clear();
+                    saved.movesFromParent.addAll(move.movesFromParent);
                 }
+                Util.recycle(move);
             }
         }
         return null;
@@ -439,7 +426,7 @@ public class GameEngine {
 
                 }
             case Util.huerisitc:
-                return pqH.poll().getBoardState();
+                return pqH.poll();
             case Util.random:
                 return state;
             default:
@@ -457,7 +444,7 @@ public class GameEngine {
                 pq.add(startingState);
                 break;
             case Util.huerisitc:
-                pqH.add(Util.getPairBoard(0, startingState));
+                pqH.add(startingState);
                 break;
             case Util.random:
                 seenStates.remove(startingState);
@@ -737,8 +724,9 @@ public class GameEngine {
             seenStates.remove(b);
             Util.recycle(b);
         }
-        for (PairBoardState p : pqH) {
-            Util.recycle(p);
+        for (BoardState b : pqH) {
+            seenStates.remove(b);
+            Util.recycle(b);
         }
         for (BoardState b : seenStates.keySet()) {
             Util.recycle(b);

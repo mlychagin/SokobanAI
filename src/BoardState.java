@@ -1,11 +1,12 @@
 import java.util.ArrayList;
 
-public class BoardState {
+public class BoardState implements Comparable<BoardState> {
     ArrayList<Pair> boxPositions = new ArrayList<>();
-    Pair sokoban = Util.getPair(0, 0);
+    Pair sokoban = new Pair(0,0);
 
+    int hueristicValue = 0;
     BoardState parent = null;
-    ArrayList<Byte> movesFromParent = Util.getArrayByte();
+    ArrayList<Byte> movesFromParent = new ArrayList<>();
 
     public BoardState() {
     }
@@ -98,7 +99,7 @@ public class BoardState {
     }
 
     public PairPairByte move(ArrayList<ArrayList<Byte>> board, byte direction) {
-        PairPairByte result = new PairPairByte();
+        PairPairByte result = Util.getPairPairByte();
         loadBoard(board);
         int offsetRow = Util.getOffsetRow(direction);
         int offsetColumn = Util.getOffsetColumn(direction);
@@ -193,6 +194,7 @@ public class BoardState {
         for (Pair p : boxPositions) {
             newState.boxPositions.add(p.clonePair());
         }
+        newState.hueristicValue = 0;
         newState.sokoban.set(this.sokoban);
         newState.parent = this;
         return newState;
@@ -205,6 +207,7 @@ public class BoardState {
         parent = null;
         boxPositions.clear();
         movesFromParent.clear();
+        hueristicValue = 0;
     }
 
     @Override
@@ -225,5 +228,10 @@ public class BoardState {
         int result = boxPositions.hashCode();
         result = 31 * result + sokoban.hashCode();
         return result;
+    }
+
+    @Override
+    public int compareTo(BoardState o) {
+        return Integer.compare(this.hueristicValue, o.hueristicValue);
     }
 }
