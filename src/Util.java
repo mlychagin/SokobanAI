@@ -276,4 +276,11 @@ public class Util {
     static int getSizePairPairBytePool(){
         return pairPairBytePool.size();
     }
+    static int getSizePriorityPool()
+    {
+        return priorityQueuePool.size();
+    }
+    static int getCountPriorityQueuePool(){
+        return countPriorityQueuePool;
+    }
 }
