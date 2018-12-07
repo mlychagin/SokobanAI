@@ -77,7 +77,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, true);
                 System.out.println(solution.size());
                 printSolution(solution);
                 System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");
