@@ -42,6 +42,9 @@ public class PlayGame {
         int countZP = Util.getCountZonePool();
         int sizeZP = Util.getSizeZonePool();
 
+        int countPQP = Util.getCountPriorityQueuePool();
+        int sizePQP = Util.getSizePriorityPool();
+
         System.out.flush();
     }
 
@@ -54,7 +57,7 @@ public class PlayGame {
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = Util.getArrayByte();
-        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, true);
+        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, Util.hRealCost, true);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -87,7 +90,7 @@ public class PlayGame {
                 GameEngine engine = new GameEngine();
                 engine.initFull(inputMap);
                 ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.bfs, Util.hMinMatching, true);
+                engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, Util.hRealCost, true);
                 System.out.println(solution.size());
                 printSolution(solution);
                 System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");

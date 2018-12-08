@@ -12,6 +12,9 @@ public class GameEngine {
     ArrayList<ArrayList<Byte>> board = new ArrayList<>();
     static HashMap<Pair, Integer> goalNodes = new HashMap<>();
     private HashSet<Pair> whiteSpaces = new HashSet<>();
+
+    private ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
+    private HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
     BoardState root;
     private Random rnd = new Random();
 
@@ -254,7 +257,7 @@ public class GameEngine {
                 BoardState iterState = Util.getBoard();
                 iterState.sokoban.set(root.sokoban);
                 iterState.boxPositions.add(p);
-                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
+                BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal, Util.hRealCost);
                 if (solutionBoardState == null) {
                     Util.setCoordinate(board, p, Util.deadSquare);
                 }
@@ -284,7 +287,7 @@ public class GameEngine {
                                 goalDistances.add(Util.maxValueInt);
                             }
                             ArrayList<Byte> solution = Util.getArrayByte();
-                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, false);
+                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost, false);
                             goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
                             Util.recycleAB(solution);
                             goalNodes.clear();
@@ -342,7 +345,7 @@ public class GameEngine {
                             }
                             break;
                         case Util.boxMove:
-                            if(calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt){
+                            if (calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt) {
                                 break;
                             }
                             if (toZone) {
@@ -383,49 +386,49 @@ public class GameEngine {
         intSeenStates.clear();
 
 
-        if(type == Util.zoneChecking){
-            if(!isZoneValid(startState, zones, zone)){
+        if (type == Util.zoneChecking) {
+            if (!isZoneValid(startState, zones, zone)) {
                 assert returnMoves != null;
-                for(BoardState bs : returnMoves){
+                for (BoardState bs : returnMoves) {
                     Util.recycle(bs);
                 }
                 returnMoves.clear();
             }
-            for(Zone z : zones){
+            for (Zone z : zones) {
                 Util.recycle(z);
             }
             zones.clear();
         }
     }
 
-    public boolean relaxEdge(Zone a, Zone b){
+    public boolean relaxEdge(Zone a, Zone b) {
         boolean wasRelaxed = false;
-        for(Pair p : a.moveableBoxes){
+        for (Pair p : a.moveableBoxes) {
             boolean ret = b.relaxBoxes(p);
-            if(!wasRelaxed && ret){
+            if (!wasRelaxed && ret) {
                 wasRelaxed = true;
             }
         }
         return wasRelaxed;
     }
 
-    public boolean edgeExists(Zone a, Zone b){
-        for(Pair p : a.moveableBoxes){
-            if(b.containsBox(p) || b.isAdjacent(p)){
+    public boolean edgeExists(Zone a, Zone b) {
+        for (Pair p : a.moveableBoxes) {
+            if (b.containsBox(p) || b.isAdjacent(p)) {
                 return true;
             }
         }
-        if(b.allBoxesOnGoal()){
+        if (b.allBoxesOnGoal()) {
             return true;
         }
         return false;
     }
 
-    public boolean isZoneValid(BoardState startState, ArrayList<Zone> zones, Zone zone){
+    public boolean isZoneValid(BoardState startState, ArrayList<Zone> zones, Zone zone) {
         while (true) {
             boolean isFinished = true;
             for (Pair p : whiteSpaces) {
-                if(startState.boxPositions.contains(p)){
+                if (startState.boxPositions.contains(p)) {
                     continue;
                 }
                 boolean contains = false;
@@ -442,7 +445,7 @@ public class GameEngine {
                     break;
                 }
             }
-            if(isFinished){
+            if (isFinished) {
                 break;
             }
         }
@@ -454,12 +457,12 @@ public class GameEngine {
         int prevReachable = Util.maxValueInt;
 
         boolean changes = true;
-        while(changes){
+        while (changes) {
             changes = false;
-            for(Zone a : zones){
-                for(Zone b : zones){
-                    if(!a.equals(b)){
-                        if(relaxEdge(a,b)){
+            for (Zone a : zones) {
+                for (Zone b : zones) {
+                    if (!a.equals(b)) {
+                        if (relaxEdge(a, b)) {
                             changes = true;
                         }
                     }
@@ -467,16 +470,16 @@ public class GameEngine {
             }
         }
 
-        while(prevReachable != getReachableZones(zones)){
+        while (prevReachable != getReachableZones(zones)) {
             prevReachable = getReachableZones(zones);
-            while(!pqZ.isEmpty()){
+            while (!pqZ.isEmpty()) {
                 Zone zA = pqZ.poll();
-                for(Zone zB : zones){
-                    if(zA.equals(zB)){
+                for (Zone zB : zones) {
+                    if (zA.equals(zB)) {
                         continue;
                     }
-                    if(edgeExists(zA, zB)){
-                        if(!seenZones.contains(zB)){
+                    if (edgeExists(zA, zB)) {
+                        if (!seenZones.contains(zB)) {
                             seenZones.add(zB);
                             zB.parent = zA;
                             pqZ.add(zB);
@@ -488,25 +491,25 @@ public class GameEngine {
             pqZ.clear();
         }
 
-        for(Zone z : zones){
-            if(z.parent == null){
+        for (Zone z : zones) {
+            if (z.parent == null) {
                 return false;
             }
         }
         return true;
     }
 
-    private int getReachableZones(ArrayList<Zone> zones){
+    private int getReachableZones(ArrayList<Zone> zones) {
         int total = 0;
-        for(Zone z : zones){
-            if(z.parent != null){
+        for (Zone z : zones) {
+            if (z.parent != null) {
                 total++;
             }
         }
         return total;
     }
 
-    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+    public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
         /*for(BoardState b : possibleMoves){
             System.out.println("Possible Moves");
             System.out.println(b.printBoard(board));
@@ -515,7 +518,7 @@ public class GameEngine {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
-                boardState.hueristicValue = calculateHueristic(boardState, heuristic, Util.hManhattan);
+                boardState.hueristicValue = calculateHueristic(boardState, heuristic, distanceType);
                 totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
@@ -534,7 +537,7 @@ public class GameEngine {
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
                 if (searchType == Util.huerisitc) {
-                    move.hueristicValue = calculateHueristic(move, heuristic, Util.hManhattan);
+                    move.hueristicValue = calculateHueristic(move, heuristic, distanceType);
                     pqH.add(move);
                 } else {
                     pq.add(move);
@@ -606,7 +609,7 @@ public class GameEngine {
         return null;
     }
 
-    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic) {
+    public BoardState findSolutionHelper(BoardState startingState, int searchType, int heuristic, int distanceType) {
         BoardState state = initSearch(startingState, searchType);
         Pair depth = Util.getPair(0, findInitDepthRequirement());
         while (true) {
@@ -623,15 +626,15 @@ public class GameEngine {
             ArrayList<Zone> zones = new ArrayList<>();
             findPossibleBoxMoves(state, possibleMoves, null, zones, Util.zoneChecking);
             zones.clear();
-            state = parseMoves(possibleMoves, searchType, heuristic);
+            state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);
         }
     }
 
-    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, boolean fullCleanUp) {
-        BoardState goalState = findSolutionHelper(root, searchType, heuristic);
+    public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, int distanceType, boolean fullCleanUp) {
+        BoardState goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
         while (searchType == Util.random && goalState == null) {
-            goalState = findSolutionHelper(root, searchType, heuristic);
+            goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
         }
         BoardState iterState = goalState;
         while (iterState != null) {
@@ -781,21 +784,20 @@ public class GameEngine {
     public int minMatching(BoardState state, int distance) {
         int i = 0;
         int j = 0;
-        ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
-        HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
+
         for (Pair p : state.boxPositions) {
-            PriorityQueue<Pair> boxCosts = new PriorityQueue<>();
+            PriorityQueue<Pair> boxCosts = Util.getPriorityQueue();
             for (Pair g : goalNodes.keySet()) {
                 switch (distance) {
                     case Util.hManhattan:
-                        boxCosts.add(new Pair(manhattanDistance(p, g), j));
+                        boxCosts.add(Util.getPair(manhattanDistance(p, g), j));
                         break;
                     case Util.hEuclidean:
-                        boxCosts.add(new Pair(euclideanDistanceSquared(p, g), j));
+                        boxCosts.add(Util.getPair(euclideanDistanceSquared(p, g), j));
                         break;
                     case Util.hRealCost:
-                        boxCosts.add(new Pair(realDistance(state.sokoban, p, goalNodes.get(g)), j));
-
+                        Pair pair = Util.getPair(realDistance(state.sokoban, p, goalNodes.get(g)), j);
+                        boxCosts.add(pair);
                 }
                 j++;
             }
@@ -809,12 +811,18 @@ public class GameEngine {
         int total = 0;
         for (PriorityQueue<Pair> treeSet : priority) {
             int tempTotal = treeSet.peek().first;
-            if (tempTotal == -1) {
-                return Integer.MAX_VALUE;
-            } else {
+            if (tempTotal == Integer.MAX_VALUE) {
+                total = Integer.MAX_VALUE;
+            } else if (total != Integer.MAX_VALUE) {
                 total += tempTotal;
             }
+            for (Pair p : treeSet) {
+                Util.recycle(p);
+            }
+            Util.recyclePriority(treeSet);
         }
+        priority.clear();
+        goalToBox.clear();
         return total;
     }
 
@@ -845,11 +853,11 @@ public class GameEngine {
             }
             if (currentNextPair == null) {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             } else if (conflictNext == null) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
 
@@ -857,12 +865,12 @@ public class GameEngine {
             int currentDifferenceInValue = currentNextPair.first - currentMinPair.first;
             int conflictDifferenceInValue = conflictNext.first - conflictMinPair.first;
             if (currentDifferenceInValue > conflictDifferenceInValue) {
-                currentBoxSet.poll();
+                Util.recycle(currentBoxSet.poll());
                 resolveConflicts(priority, goalToBox, boxNum);
                 return;
             } else {
                 goalToBox.replace(currentMinPair.second, boxNum);
-                conflictBoxSet.poll();
+                Util.recycle(conflictBoxSet.poll());
                 resolveConflicts(priority, goalToBox, conflictBoxNum);
                 return;
             }

@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 public class Util {
     public static final byte up = 1;
@@ -45,7 +46,7 @@ public class Util {
     public static final int hEuclidean = 301;
     public static final int hRealCost = 302;
 
-    public static final int maxValueInt = -1;
+    public static final int maxValueInt = Integer.MAX_VALUE;
 
     private static LinkedList<BoardState> boardPool = new LinkedList<>();
     private static LinkedList<Pair> pairPool = new LinkedList<>();
@@ -55,6 +56,7 @@ public class Util {
     private static LinkedList<DoublePair> doublePairPool = new LinkedList<>();
     private static LinkedList<Zone> zonePool = new LinkedList<>();
 
+    private static LinkedList<PriorityQueue<Pair>> priorityQueuePool = new LinkedList<>();
     private static int countBoardPool = 0;
     private static int countZonePool = 0;
     private static int countPairPool = 0;
@@ -62,6 +64,7 @@ public class Util {
     private static int countArrayBytePool = 0;
     private static int countPairPairBytePool = 0;
     private static int countDoublePairPool = 0;
+    private static int countPriorityQueuePool = 0;
 
     Util() {
     }
@@ -231,6 +234,20 @@ public class Util {
         return new ArrayList<>();
     }
 
+    static PriorityQueue<Pair> getPriorityQueue() {
+        if (!priorityQueuePool.isEmpty()) {
+            return priorityQueuePool.poll();
+        }
+        countPriorityQueuePool++;
+        return new PriorityQueue<>();
+
+    }
+
+    static void recyclePriority(PriorityQueue<Pair> queue) {
+        queue.clear();
+        priorityQueuePool.add(queue);
+    }
+
     static void recycleAB(ArrayList<Byte> arrayByte) {
         arrayByte.clear();
         arrayBytePool.add(arrayByte);
@@ -290,28 +307,35 @@ public class Util {
         return arrayBytePool.size();
     }
 
-    static int getCountPairPairBytePool(){
+    static int getCountPairPairBytePool() {
         return countPairPairBytePool;
     }
 
-    static int getSizePairPairBytePool(){
+    static int getSizePairPairBytePool() {
         return pairPairBytePool.size();
     }
 
-    static int getCountDoublePairPool(){
+    static int getCountDoublePairPool() {
         return countDoublePairPool;
     }
 
-    static int getSizeDoublePairPool(){
+    static int getSizeDoublePairPool() {
         return doublePairPool.size();
     }
 
-    static int getCountZonePool(){
+    static int getCountZonePool() {
         return countZonePool;
     }
 
-    static int getSizeZonePool(){
+    static int getSizeZonePool() {
         return zonePool.size();
     }
 
+    static int getSizePriorityPool() {
+        return priorityQueuePool.size();
+    }
+
+    static int getCountPriorityQueuePool() {
+        return countPriorityQueuePool;
+    }
 }

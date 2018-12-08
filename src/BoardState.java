@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class BoardState implements Comparable<BoardState> {
     ArrayList<Pair> boxPositions = new ArrayList<>();
-    Pair sokoban = new Pair(0,0);
+    Pair sokoban = new Pair(0, 0);
 
     int hueristicValue = 0;
     BoardState parent = null;
@@ -108,7 +108,7 @@ public class BoardState implements Comparable<BoardState> {
         switch (Util.getCoordinate(board, location)) {
             case Util.box:
             case Util.boxOnGoal:
-                if(moveBox(board, location, direction)){
+                if (moveBox(board, location, direction)) {
                     result.returnType = Util.boxMove;
                     result.boxLocation.set(sokoban);
                 } else {
@@ -232,7 +232,7 @@ public class BoardState implements Comparable<BoardState> {
     @Override
     public int hashCode() {
         int result = 0;
-        for(Pair p : boxPositions){
+        for (Pair p : boxPositions) {
             result = 31 * p.hashCode();
         }
         result = 31 * result + sokoban.hashCode();
