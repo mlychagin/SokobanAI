@@ -16,6 +16,7 @@ public class GameEngine {
     private ArrayList<PriorityQueue<Pair>> priority = new ArrayList<>();
     private HashMap<Integer, Integer> goalToBox = new HashMap<Integer, Integer>();
     BoardState root;
+    private boolean startPruning = false;
     private Random rnd = new Random();
 
 
@@ -129,8 +130,9 @@ public class GameEngine {
         System.out.println(root.printBoard(board));
         setDeadPositions();
         setWallPositionsOutside();
-        //setDeadPositionsAlgo();
-        //setDistances();
+        setDeadPositionsAlgo();
+        setDistances();
+        startPruning = true;
     }
 
     public void setDeadPositions() {
@@ -287,7 +289,7 @@ public class GameEngine {
                                 goalDistances.add(Util.maxValueInt);
                             }
                             ArrayList<Byte> solution = Util.getArrayByte();
-                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost, false);
+                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hManhattan, false);
                             goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
                             Util.recycleAB(solution);
                             goalNodes.clear();
@@ -345,7 +347,7 @@ public class GameEngine {
                             }
                             break;
                         case Util.boxMove:
-                            if (calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt) {
+                            if (startPruning && calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt) {
                                 break;
                             }
                             if (toZone) {
@@ -510,10 +512,6 @@ public class GameEngine {
     }
 
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
-        /*for(BoardState b : possibleMoves){
-            System.out.println("Possible Moves");
-            System.out.println(b.printBoard(board));
-        }*/
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
@@ -617,8 +615,6 @@ public class GameEngine {
             if (state == null) {
                 return null;
             }
-            //System.out.println("Pick");
-            //System.out.println(state.printBoard(board));
             if (isGoalState(state)) {
                 return state;
             }
@@ -918,6 +914,7 @@ public class GameEngine {
         whiteSpaces.clear();
         goalNodes.clear();
         board.clear();
+        startPruning = false;
     }
 }
 
