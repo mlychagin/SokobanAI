@@ -72,13 +72,13 @@ public class BoardState implements Comparable<BoardState> {
         Util.setCoordinate(board, startLocation, Util.getCoordinate(board, startLocation) == Util.box ? Util.empty : Util.goal);
         Util.setCoordinate(board, endLocation, Util.getCoordinate(board, endLocation) == Util.empty ? Util.box : Util.boxOnGoal);
         updatePlayerPositionAfterMoving(direction);
-        moveBoxExtra(board, endLocation, direction);
+        //moveBoxExtra(board, endLocation, direction);
     }
 
     private void moveBoxExtra(ArrayList<ArrayList<Byte>> board, Pair startLocation, byte direction) {
         Pair endLocation = Util.getPair(startLocation.getFirst() + Util.getOffsetRow(direction), startLocation.getSecond() + Util.getOffsetColumn(direction));
         byte endLocationValue = Util.getCoordinate(board, endLocation);
-        if (endLocationValue == Util.wall || endLocationValue == Util.deadZone || !Util.moveBoxExtraHelper(board, startLocation, endLocation, direction)) {
+        if (endLocationValue == Util.wall || endLocationValue == Util.deadSquare || !Util.moveBoxExtraHelper(board, startLocation, endLocation, direction)) {
             Util.recycle(endLocation);
             return;
         }
@@ -108,9 +108,15 @@ public class BoardState implements Comparable<BoardState> {
         switch (Util.getCoordinate(board, location)) {
             case Util.box:
             case Util.boxOnGoal:
-                result.returnType = moveBox(board, location, direction) ? Util.boxMove : Util.invalidBoxMove;
+                if(moveBox(board, location, direction)){
+                    result.returnType = Util.boxMove;
+                    result.boxLocation.set(sokoban);
+                } else {
+                    result.returnType = Util.invalidBoxMove;
+                    result.boxLocation.set(sokoban.getFirst() + offsetRow, sokoban.getSecond() + offsetColumn);
+                }
                 break;
-            case Util.deadZone:
+            case Util.deadSquare:
             case Util.empty:
             case Util.goal:
                 updatePlayerPositionAfterMoving(direction);
@@ -135,8 +141,8 @@ public class BoardState implements Comparable<BoardState> {
             case Util.goal:
                 Util.setCoordinate(board, sokoban, Util.playerOnGoal);
                 break;
-            case Util.deadZone:
-                Util.setCoordinate(board, sokoban, Util.playerOnDeadZone);
+            case Util.deadSquare:
+                Util.setCoordinate(board, sokoban, Util.playerOnDeadSquare);
                 break;
             default:
                 System.out.println("Invalid Player Load");
@@ -152,8 +158,8 @@ public class BoardState implements Comparable<BoardState> {
             case Util.playerOnGoal:
                 Util.setCoordinate(board, sokoban, Util.goal);
                 break;
-            case Util.playerOnDeadZone:
-                Util.setCoordinate(board, sokoban, Util.deadZone);
+            case Util.playerOnDeadSquare:
+                Util.setCoordinate(board, sokoban, Util.deadSquare);
                 break;
             default:
                 System.out.println("Invalid Player Reset");
@@ -225,7 +231,10 @@ public class BoardState implements Comparable<BoardState> {
 
     @Override
     public int hashCode() {
-        int result = boxPositions.hashCode();
+        int result = 0;
+        for(Pair p : boxPositions){
+            result = 31 * p.hashCode();
+        }
         result = 31 * result + sokoban.hashCode();
         return result;
     }

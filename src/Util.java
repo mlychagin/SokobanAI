@@ -12,6 +12,13 @@ public class Util {
     public static final byte boxMove = 7;
     public static final byte invalidBoxMove = 8;
 
+    public static final byte zoneChecking = 10;
+    public static final byte zoneCheckingHelper = 11;
+    public static final byte noZoneChecking = 12;
+    public static final byte deadZone = 13;
+    public static final byte updateZone = 14;
+    public static final byte liveZone = 15;
+
     public static final byte empty = ' ';
     public static final byte box = '$';
     public static final byte goal = '.';
@@ -19,8 +26,8 @@ public class Util {
     public static final byte player = '@';
     public static final byte playerOnGoal = '+';
     public static final byte wall = '#';
-    public static final byte deadZone = 'x';
-    public static final byte playerOnDeadZone = '!';
+    public static final byte deadSquare = 'x';
+    public static final byte playerOnDeadSquare = '!';
 
     public static final int bfs = 100;
     public static final int dfs = 101;
@@ -45,12 +52,16 @@ public class Util {
     private static LinkedList<ArrayList<BoardState>> arrayBoardStatePool = new LinkedList<>();
     private static LinkedList<ArrayList<Byte>> arrayBytePool = new LinkedList<>();
     private static LinkedList<PairPairByte> pairPairBytePool = new LinkedList<>();
+    private static LinkedList<DoublePair> doublePairPool = new LinkedList<>();
+    private static LinkedList<Zone> zonePool = new LinkedList<>();
 
     private static int countBoardPool = 0;
+    private static int countZonePool = 0;
     private static int countPairPool = 0;
     private static int countArrayBoardStatePool = 0;
     private static int countArrayBytePool = 0;
     private static int countPairPairBytePool = 0;
+    private static int countDoublePairPool = 0;
 
     Util() {
     }
@@ -169,6 +180,19 @@ public class Util {
         return new Pair(x, y);
     }
 
+    static void recycle(Zone z) {
+        z.reset();
+        zonePool.add(z);
+    }
+
+    static Zone getZone() {
+        if (!zonePool.isEmpty()) {
+            return zonePool.poll();
+        }
+        countZonePool++;
+        return new Zone();
+    }
+
     static void recycle(PairPairByte pair) {
         pairPairBytePool.add(pair);
     }
@@ -220,6 +244,20 @@ public class Util {
         return new ArrayList<>();
     }
 
+    static void recycle(DoublePair pair) {
+        doublePairPool.add(pair);
+    }
+
+    static DoublePair getDoublePair(Pair x, Pair y) {
+        if (!doublePairPool.isEmpty()) {
+            DoublePair p = doublePairPool.poll();
+            p.set(x, y);
+            return p;
+        }
+        countDoublePairPool++;
+        return new DoublePair(x, y);
+    }
+
     static int getCountBoardPool() {
         return countBoardPool;
     }
@@ -259,4 +297,21 @@ public class Util {
     static int getSizePairPairBytePool(){
         return pairPairBytePool.size();
     }
+
+    static int getCountDoublePairPool(){
+        return countDoublePairPool;
+    }
+
+    static int getSizeDoublePairPool(){
+        return doublePairPool.size();
+    }
+
+    static int getCountZonePool(){
+        return countZonePool;
+    }
+
+    static int getSizeZonePool(){
+        return zonePool.size();
+    }
+
 }

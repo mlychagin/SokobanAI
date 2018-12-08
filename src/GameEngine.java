@@ -5,6 +5,8 @@ public class GameEngine {
     private PriorityQueue<BoardState> pqH = new PriorityQueue<>();
     private LinkedList<BoardState> pq = new LinkedList<>();
     private LinkedList<BoardState> intpq = new LinkedList<>();
+    private LinkedList<Zone> pqZ = new LinkedList<>();
+    private HashSet<Zone> seenZones = new HashSet<>();
     private HashSet<BoardState> intSeenStates = new HashSet<>();
     private HashMap<DoublePair, ArrayList<Integer>> distances = new HashMap<>();
     ArrayList<ArrayList<Byte>> board = new ArrayList<>();
@@ -12,6 +14,7 @@ public class GameEngine {
     private HashSet<Pair> whiteSpaces = new HashSet<>();
     BoardState root;
     private Random rnd = new Random();
+
 
     public GameEngine() {
     }
@@ -123,8 +126,8 @@ public class GameEngine {
         System.out.println(root.printBoard(board));
         setDeadPositions();
         setWallPositionsOutside();
-        setDeadPositionsAlgo();
-        setDistances();
+        //setDeadPositionsAlgo();
+        //setDistances();
     }
 
     public void setDeadPositions() {
@@ -138,7 +141,7 @@ public class GameEngine {
                     p.set(i, j);
                     if (row.get(j) == Util.empty && !goalNodes.containsKey(p)) {
                         if (isDeadLock(row, board.get(i - 1), board.get(i + 1), j)) {
-                            row.set(j, Util.deadZone);
+                            row.set(j, Util.deadSquare);
                             keepGoing = true;
                         }
                     }
@@ -160,7 +163,7 @@ public class GameEngine {
     }
 
     private boolean moveAble(Byte sokoban, Byte destinationOfBlock) {
-        return destinationOfBlock != Util.deadZone && destinationOfBlock != Util.wall && sokoban != Util.wall;
+        return destinationOfBlock != Util.deadSquare && destinationOfBlock != Util.wall && sokoban != Util.wall;
     }
 
     public void setWallPositionsOutside() {
@@ -182,7 +185,7 @@ public class GameEngine {
         BoardState blankState = Util.getBoard();
         blankState.sokoban.set(root.sokoban);
         ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
-        findPossibleBoxMoves(blankState, possibleMoves, whiteSpaces);
+        findPossibleBoxMoves(blankState, possibleMoves, whiteSpaces, null, Util.noZoneChecking);
         for (BoardState bs : possibleMoves) {
             Util.recycle(bs);
         }
@@ -247,13 +250,13 @@ public class GameEngine {
     public void setDeadPositionsAlgo() {
         for (Pair p : whiteSpaces) {
             //TODO Root?
-            if (Util.getCoordinate(board, p) != Util.deadZone && !goalNodes.containsKey(p) && !p.equals(root.sokoban)) {
+            if (Util.getCoordinate(board, p) != Util.deadSquare && !goalNodes.containsKey(p) && !p.equals(root.sokoban)) {
                 BoardState iterState = Util.getBoard();
                 iterState.sokoban.set(root.sokoban);
                 iterState.boxPositions.add(p);
                 BoardState solutionBoardState = findSolutionHelper(iterState, Util.dfs, Util.hBoxesOnGoal);
                 if (solutionBoardState == null) {
-                    Util.setCoordinate(board, p, Util.deadZone);
+                    Util.setCoordinate(board, p, Util.deadSquare);
                 }
                 iterState.boxPositions.clear();
                 cleanUpReset();
@@ -270,9 +273,10 @@ public class GameEngine {
             root.sokoban.set(playerLocation);
             for (Pair boxLocation : whiteSpaces) {
                 if (!playerLocation.equals(boxLocation)) {
-                    if (Util.getCoordinate(board, boxLocation) != Util.deadZone) {
-                        DoublePair key = new DoublePair(playerLocation, boxLocation);
+                    if (Util.getCoordinate(board, boxLocation) != Util.deadSquare) {
+                        DoublePair key = Util.getDoublePair(playerLocation, boxLocation);
                         root.addBoxLocation(boxLocation);
+                        //TODO Recycle ArrayList Integer
                         ArrayList<Integer> goalDistances = new ArrayList<>();
                         for (Map.Entry<Pair, Integer> goal : saveGoalNodes.entrySet()) {
                             goalNodes.put(goal.getKey(), goal.getValue());
@@ -300,7 +304,14 @@ public class GameEngine {
      * Search Algorithms
      */
 
-    public void findPossibleBoxMoves(BoardState startState, ArrayList<BoardState> returnMoves, HashSet<Pair> visitableVertices) {
+    public void findPossibleBoxMoves(BoardState startState, ArrayList<BoardState> returnMoves, HashSet<Pair> visitableVertices, ArrayList<Zone> zones, byte type) {
+        Zone zone = null;
+        boolean toZone = type == Util.zoneChecking || type == Util.zoneCheckingHelper;
+        if (toZone) {
+            zone = Util.getZone();
+            zones.add(zone);
+            visitableVertices = zone.whiteSpaces;
+        }
         intpq.add(startState);
         intSeenStates.add(startState);
         if (visitableVertices != null) visitableVertices.add(startState.sokoban.clonePair());
@@ -312,6 +323,9 @@ public class GameEngine {
             for (byte i = Util.up; i <= Util.down; i++) {
                 PairPairByte ret = child.move(board, i);
                 if (ret.returnType == Util.invalidMove || ret.returnType == Util.invalidBoxMove) {
+                    if (ret.returnType == Util.invalidBoxMove && toZone) {
+                        zone.unMoveableBoxes.add(Util.getPair(ret.boxLocation.getFirst(), ret.boxLocation.getSecond()));
+                    }
                     Util.recycle(ret);
                     continue;
                 }
@@ -328,15 +342,25 @@ public class GameEngine {
                             }
                             break;
                         case Util.boxMove:
-                            returnMoves.add(child);
-                            intSeenStates.add(child);
-                            ArrayList<Byte> childMovesFromParent = child.movesFromParent;
-                            child = child.parent;
-                            while (!child.equals(startState)) {
-                                childMovesFromParent.addAll(child.movesFromParent);
-                                child = child.parent;
+                            if(calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt){
+                                break;
                             }
-                            returnMoves.get(returnMoves.size() - 1).parent = startState;
+                            if (toZone) {
+                                zone.moveableBoxes.add(Util.getPair(ret.boxLocation.getFirst(), ret.boxLocation.getSecond()));
+                            }
+                            intSeenStates.add(child);
+                            if (returnMoves != null) {
+                                returnMoves.add(child);
+                                ArrayList<Byte> childMovesFromParent = child.movesFromParent;
+                                child = child.parent;
+                                assert child != null;
+                                assert startState != null;
+                                while (!child.equals(startState)) {
+                                    childMovesFromParent.addAll(child.movesFromParent);
+                                    child = child.parent;
+                                }
+                                returnMoves.get(returnMoves.size() - 1).parent = startState;
+                            }
                             break;
                         default:
                             System.out.println("Incorrect Move");
@@ -352,14 +376,141 @@ public class GameEngine {
             Util.recycle(child);
         }
         for (BoardState b : intSeenStates) {
-            if (!returnMoves.contains(b) && !b.equals(startState)) {
+            if (!b.equals(startState) && returnMoves != null && !returnMoves.contains(b)) {
                 Util.recycle(b);
             }
         }
         intSeenStates.clear();
+
+
+        if(type == Util.zoneChecking){
+            if(!isZoneValid(startState, zones, zone)){
+                assert returnMoves != null;
+                for(BoardState bs : returnMoves){
+                    Util.recycle(bs);
+                }
+                returnMoves.clear();
+            }
+            for(Zone z : zones){
+                Util.recycle(z);
+            }
+            zones.clear();
+        }
+    }
+
+    public boolean relaxEdge(Zone a, Zone b){
+        boolean wasRelaxed = false;
+        for(Pair p : a.moveableBoxes){
+            boolean ret = b.relaxBoxes(p);
+            if(!wasRelaxed && ret){
+                wasRelaxed = true;
+            }
+        }
+        return wasRelaxed;
+    }
+
+    public boolean edgeExists(Zone a, Zone b){
+        for(Pair p : a.moveableBoxes){
+            if(b.containsBox(p) || b.isAdjacent(p)){
+                return true;
+            }
+        }
+        if(b.allBoxesOnGoal()){
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isZoneValid(BoardState startState, ArrayList<Zone> zones, Zone zone){
+        while (true) {
+            boolean isFinished = true;
+            for (Pair p : whiteSpaces) {
+                if(startState.boxPositions.contains(p)){
+                    continue;
+                }
+                boolean contains = false;
+                for (Zone z : zones) {
+                    if (z.whiteSpaces.contains(p)) {
+                        contains = true;
+                    }
+                }
+                if (!contains) {
+                    BoardState boardState = startState.getChild();
+                    boardState.sokoban.set(p);
+                    findPossibleBoxMoves(boardState, null, null, zones, Util.zoneCheckingHelper);
+                    isFinished = false;
+                    break;
+                }
+            }
+            if(isFinished){
+                break;
+            }
+        }
+
+        zone.parent = zone;
+        seenZones.add(zone);
+        pqZ.add(zone);
+
+        int prevReachable = Util.maxValueInt;
+
+        boolean changes = true;
+        while(changes){
+            changes = false;
+            for(Zone a : zones){
+                for(Zone b : zones){
+                    if(!a.equals(b)){
+                        if(relaxEdge(a,b)){
+                            changes = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        while(prevReachable != getReachableZones(zones)){
+            prevReachable = getReachableZones(zones);
+            while(!pqZ.isEmpty()){
+                Zone zA = pqZ.poll();
+                for(Zone zB : zones){
+                    if(zA.equals(zB)){
+                        continue;
+                    }
+                    if(edgeExists(zA, zB)){
+                        if(!seenZones.contains(zB)){
+                            seenZones.add(zB);
+                            zB.parent = zA;
+                            pqZ.add(zB);
+                        }
+                    }
+                }
+            }
+            seenZones.clear();
+            pqZ.clear();
+        }
+
+        for(Zone z : zones){
+            if(z.parent == null){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int getReachableZones(ArrayList<Zone> zones){
+        int total = 0;
+        for(Zone z : zones){
+            if(z.parent != null){
+                total++;
+            }
+        }
+        return total;
     }
 
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic) {
+        /*for(BoardState b : possibleMoves){
+            System.out.println("Possible Moves");
+            System.out.println(b.printBoard(board));
+        }*/
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
@@ -463,11 +614,15 @@ public class GameEngine {
             if (state == null) {
                 return null;
             }
+            //System.out.println("Pick");
+            //System.out.println(state.printBoard(board));
             if (isGoalState(state)) {
                 return state;
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
-            findPossibleBoxMoves(state, possibleMoves, null);
+            ArrayList<Zone> zones = new ArrayList<>();
+            findPossibleBoxMoves(state, possibleMoves, null, zones, Util.zoneChecking);
+            zones.clear();
             state = parseMoves(possibleMoves, searchType, heuristic);
             Util.recycleABS(possibleMoves);
         }
@@ -573,7 +728,7 @@ public class GameEngine {
     public int hToSingleGoal(BoardState state, int distanceType) {
         int totalDistance = 0;
         int tempDistance = -1;
-        Pair tempGoalPair = new Pair(-1, -1);
+        Pair tempGoalPair = Util.getPair(-1, -1);
         HashSet<Pair> tempGoalNodes = (HashSet) goalNodes.clone();
         for (Pair p : state.boxPositions) {
             for (Pair g : tempGoalNodes) {
@@ -608,9 +763,10 @@ public class GameEngine {
     }
 
     private int realDistance(Pair player, Pair box, int goal) {
-        DoublePair pair = new DoublePair(player, box);
-
-        return distances.get(pair).get(goal);
+        DoublePair pair = Util.getDoublePair(player, box);
+        int distance = distances.get(pair).get(goal);
+        Util.recycle(pair);
+        return distance;
     }
 
     private int hMoveCost(BoardState state) {
@@ -747,6 +903,10 @@ public class GameEngine {
         for (ArrayList<Byte> ab : board) {
             Util.recycleAB(ab);
         }
+        for (DoublePair p : distances.keySet()) {
+            Util.recycle(p);
+        }
+        distances.clear();
         whiteSpaces.clear();
         goalNodes.clear();
         board.clear();

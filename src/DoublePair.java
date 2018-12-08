@@ -1,10 +1,15 @@
 public class DoublePair {
-    private Pair playerLocation;
-    private Pair boxLocation;
+    private Pair playerLocation = new Pair(0,0);
+    private Pair boxLocation = new Pair(0,0);
 
     public DoublePair(Pair playerLocation, Pair boxLocation) {
-        this.playerLocation = playerLocation;
-        this.boxLocation = boxLocation;
+        this.playerLocation.set(playerLocation);
+        this.boxLocation.set(boxLocation);
+    }
+
+    public void set(Pair playerLocation, Pair boxLocation) {
+        this.playerLocation.set(playerLocation);
+        this.boxLocation.set(boxLocation);
     }
 
     public Pair getPlayerLocation() {
