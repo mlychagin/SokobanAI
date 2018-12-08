@@ -19,6 +19,10 @@ public class GameEngine {
     private boolean startPruning = false;
     private Random rnd = new Random();
 
+    static boolean tunneling = false;
+    static boolean zoneDetection = false;
+    static boolean hminPruning = false;
+
 
     public GameEngine() {
     }
@@ -347,7 +351,7 @@ public class GameEngine {
                             }
                             break;
                         case Util.boxMove:
-                            if (startPruning && calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt) {
+                            if (hminPruning && startPruning && calculateHueristic(child, Util.hMinMatching, Util.hRealCost) == Util.maxValueInt) {
                                 break;
                             }
                             if (toZone) {
@@ -620,7 +624,7 @@ public class GameEngine {
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             ArrayList<Zone> zones = new ArrayList<>();
-            findPossibleBoxMoves(state, possibleMoves, null, zones, Util.zoneChecking);
+            findPossibleBoxMoves(state, possibleMoves, null, zones, zoneDetection ? Util.zoneChecking : Util.noZoneChecking);
             zones.clear();
             state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);

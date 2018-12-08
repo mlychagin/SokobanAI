@@ -72,7 +72,9 @@ public class BoardState implements Comparable<BoardState> {
         Util.setCoordinate(board, startLocation, Util.getCoordinate(board, startLocation) == Util.box ? Util.empty : Util.goal);
         Util.setCoordinate(board, endLocation, Util.getCoordinate(board, endLocation) == Util.empty ? Util.box : Util.boxOnGoal);
         updatePlayerPositionAfterMoving(direction);
-        //moveBoxExtra(board, endLocation, direction);
+        if(GameEngine.tunneling){
+            moveBoxExtra(board, endLocation, direction);
+        }
     }
 
     private void moveBoxExtra(ArrayList<ArrayList<Byte>> board, Pair startLocation, byte direction) {

@@ -46,8 +46,8 @@ public class Util {
     public static final int hEuclidean = 301;
     public static final int hRealCost = 302;
 
-    //public static final int maxValueInt = Integer.MAX_VALUE;
-    public static final int maxValueInt = -1;
+    public static final int maxValueInt = Integer.MAX_VALUE;
+    //public static final int maxValueInt = -1;
 
     private static LinkedList<BoardState> boardPool = new LinkedList<>();
     private static LinkedList<Pair> pairPool = new LinkedList<>();
