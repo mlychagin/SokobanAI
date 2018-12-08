@@ -19,9 +19,10 @@ public class GameEngine {
     private boolean startPruning = false;
     private Random rnd = new Random();
 
-    static boolean tunneling = false;
+    static boolean tunneling = true;
     static boolean zoneDetection = false;
     static boolean hminPruning = false;
+    static boolean deadLockDetection = true;
 
 
     public GameEngine() {
@@ -132,11 +133,13 @@ public class GameEngine {
 
     public void preComputations() {
         System.out.println(root.printBoard(board));
-        setDeadPositions();
-        setWallPositionsOutside();
-        setDeadPositionsAlgo();
-        setDistances();
-        startPruning = true;
+        if(deadLockDetection){
+            setDeadPositions();
+            setWallPositionsOutside();
+            setDeadPositionsAlgo();
+            setDistances();
+            startPruning = true;
+        }
     }
 
     public void setDeadPositions() {
@@ -516,6 +519,10 @@ public class GameEngine {
     }
 
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
+        /*for(BoardState b : possibleMoves){
+            System.out.println("Children");
+            System.out.println(b.printBoard(board));
+        }*/
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
@@ -619,6 +626,8 @@ public class GameEngine {
             if (state == null) {
                 return null;
             }
+            //System.out.println("Pick");
+            //System.out.println(state.printBoard(board));
             if (isGoalState(state)) {
                 return state;
             }
