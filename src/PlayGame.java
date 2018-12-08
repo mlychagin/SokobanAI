@@ -23,11 +23,9 @@ public class PlayGame {
     public static void statLeak() {
         int countBP = Util.getCountBoardPool();
         int sizeBP = Util.getSizeBoardPool();
-        System.out.println(countBP - sizeBP);
 
         int countPP = Util.getCountPairPool();
         int sizePP = Util.getSizePairPool();
-        System.out.println(countPP - sizePP);
 
         int countABSP = Util.getCountArrayBoardStatePool();
         int sizeABSP = Util.getSizeArrayBoardStatePool();
@@ -59,7 +57,7 @@ public class PlayGame {
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = Util.getArrayByte();
-        engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost, true);
+        engine.findSolution(solution, Util.bfs, Util.hMoveCost, Util.hManhattan, true);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -88,14 +86,14 @@ public class PlayGame {
                 continue;
             }
             if (line.contains(";")) {
-                for(int i = 0; i < 1; i++){
+                for (int i = 0; i < 1; i++) {
                     long lStartTime = System.currentTimeMillis();
 
                     System.out.print(line.substring(1) + ",");
                     GameEngine engine = new GameEngine();
                     engine.initFull(inputMap);
                     ArrayList<Byte> solution = Util.getArrayByte();
-                    engine.findSolution(solution, Util.bfs, Util.hMoveCost, Util.hManhattan, true);
+                    engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, Util.hRealCost, true);
 
                     long lEndTime = System.currentTimeMillis();
                     long output = lEndTime - lStartTime;

@@ -24,7 +24,6 @@ public class GameEngine {
     static boolean hminPruning = false;
     static boolean deadLockDetection = true;
 
-
     LinkedList<BoardState> boardPool = Util.boardPool;
     LinkedList<Pair> pairPool = Util.pairPool;
 
@@ -78,7 +77,8 @@ public class GameEngine {
     }
 
     public void initFull(ArrayList<String> map) {
-        initHelper(map);;
+        initHelper(map);
+        ;
         preComputations();
     }
 
@@ -135,7 +135,7 @@ public class GameEngine {
     }
 
     public void preComputations() {
-        if(deadLockDetection){
+        if (deadLockDetection) {
             setDeadPositions();
             setWallPositionsOutside();
             setDeadPositionsAlgo();
@@ -205,6 +205,9 @@ public class GameEngine {
     private void findWhiteSpaces() {
         findWhiteSpacesHelper();
         for (Pair p : whiteSpaces) {
+            if (goalNodes.containsKey(p)) {
+                continue;
+            }
             byte up = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.up), p.getSecond() + Util.getOffsetColumn(Util.up));
             byte down = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.down), p.getSecond() + Util.getOffsetColumn(Util.down));
             byte left = Util.getCoordinate(board, p.getFirst() + Util.getOffsetRow(Util.left), p.getSecond() + Util.getOffsetColumn(Util.left));
@@ -233,17 +236,23 @@ public class GameEngine {
                 finalDir = Util.right;
             }
             if (count == 3) {
+                Pair endLocation = Util.getPair(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
                 if (root.sokoban.equals(p)) {
-                    root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
-                    root.movesFromParent.add(finalDir);
-
-                    Pair endLocation = Util.getPair(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
                     if (root.boxPositions.contains(endLocation)) {
                         Pair box = root.boxPositions.get(root.boxPositions.indexOf(endLocation));
-                        box.set(box.getFirst() + Util.getOffsetRow(finalDir), box.getSecond() + Util.getOffsetColumn(finalDir));
+                        Pair endBoxLocation = Util.getPair(box.getFirst() + Util.getOffsetRow(finalDir), box.getSecond() + Util.getOffsetColumn(finalDir));
+                        if (Util.getCoordinate(board, endBoxLocation) != Util.wall) {
+                            root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
+                            root.movesFromParent.add(finalDir);
+                            box.set(endBoxLocation);
+                        }
+                        Util.recycle(endBoxLocation);
+                    } else {
+                        root.sokoban.set(p.getFirst() + Util.getOffsetRow(finalDir), p.getSecond() + Util.getOffsetColumn(finalDir));
+                        root.movesFromParent.add(finalDir);
                     }
-                    Util.recycle(endLocation);
                 }
+                Util.recycle(endLocation);
                 if (!goalNodes.containsKey(p)) {
                     Util.setCoordinate(board, p, Util.wall);
                 }
@@ -386,10 +395,10 @@ public class GameEngine {
             Util.recycle(child);
         }
         for (BoardState b : intSeenStates) {
-            if(b.equals(startState)){
+            if (b.equals(startState)) {
                 continue;
             }
-            if(returnMoves != null && returnMoves.contains(b)){
+            if (returnMoves != null && returnMoves.contains(b)) {
                 continue;
             }
             Util.recycle(b);
@@ -521,11 +530,11 @@ public class GameEngine {
     }
 
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
-        if (searchType == Util.random) {
+        if (searchType == Util.randomH || searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
-                boardState.hueristicValue = calculateHueristic(boardState, heuristic, distanceType);
+                boardState.hueristicValue = searchType == Util.random ? 1 : calculateHueristic(boardState, heuristic, distanceType);
                 totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
@@ -631,7 +640,7 @@ public class GameEngine {
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             ArrayList<Zone> zones = new ArrayList<>();
-            findPossibleBoxMoves(state, possibleMoves, null, zones, zoneDetection ? Util.zoneChecking : Util.noZoneChecking);
+            findPossibleBoxMoves(state, possibleMoves, null, zones, zoneDetection && startPruning ? Util.zoneChecking : Util.noZoneChecking);
             zones.clear();
             state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);
@@ -900,7 +909,7 @@ public class GameEngine {
     }
 
     public void cleanUpAll(boolean printStateCount) {
-        if(printStateCount){
+        if (printStateCount) {
             System.out.print(seenStates.size() + ",");
         }
         cleanUpReset();

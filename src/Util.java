@@ -35,6 +35,7 @@ public class Util {
     public static final int ids = 102;
     public static final int huerisitc = 103;
     public static final int random = 104;
+    public static final int randomH = 105;
 
     public static final int hBoxesOnGoal = 200;
     public static final int hToAnyGoal = 201;
