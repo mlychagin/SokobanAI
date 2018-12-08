@@ -25,6 +25,9 @@ public class GameEngine {
     static boolean deadLockDetection = true;
 
 
+    LinkedList<BoardState> boardPool = Util.boardPool;
+    LinkedList<Pair> pairPool = Util.pairPool;
+
     public GameEngine() {
     }
 
@@ -75,7 +78,7 @@ public class GameEngine {
     }
 
     public void initFull(ArrayList<String> map) {
-        initHelper(map);
+        initHelper(map);;
         preComputations();
     }
 
@@ -132,7 +135,6 @@ public class GameEngine {
     }
 
     public void preComputations() {
-        System.out.println(root.printBoard(board));
         if(deadLockDetection){
             setDeadPositions();
             setWallPositionsOutside();
@@ -196,12 +198,7 @@ public class GameEngine {
     private void findWhiteSpacesHelper() {
         BoardState blankState = Util.getBoard();
         blankState.sokoban.set(root.sokoban);
-        ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
-        findPossibleBoxMoves(blankState, possibleMoves, whiteSpaces, null, Util.noZoneChecking);
-        for (BoardState bs : possibleMoves) {
-            Util.recycle(bs);
-        }
-        Util.recycleABS(possibleMoves);
+        findPossibleBoxMoves(blankState, null, whiteSpaces, null, Util.noZoneChecking);
         Util.recycle(blankState);
     }
 
@@ -261,7 +258,6 @@ public class GameEngine {
 
     public void setDeadPositionsAlgo() {
         for (Pair p : whiteSpaces) {
-            //TODO Root?
             if (Util.getCoordinate(board, p) != Util.deadSquare && !goalNodes.containsKey(p) && !p.equals(root.sokoban)) {
                 BoardState iterState = Util.getBoard();
                 iterState.sokoban.set(root.sokoban);
@@ -372,6 +368,8 @@ public class GameEngine {
                                     child = child.parent;
                                 }
                                 returnMoves.get(returnMoves.size() - 1).parent = startState;
+                            } else {
+                                Util.recycle(child);
                             }
                             break;
                         default:
@@ -388,9 +386,13 @@ public class GameEngine {
             Util.recycle(child);
         }
         for (BoardState b : intSeenStates) {
-            if (!b.equals(startState) && returnMoves != null && !returnMoves.contains(b)) {
-                Util.recycle(b);
+            if(b.equals(startState)){
+                continue;
             }
+            if(returnMoves != null && returnMoves.contains(b)){
+                continue;
+            }
+            Util.recycle(b);
         }
         intSeenStates.clear();
 
@@ -519,10 +521,6 @@ public class GameEngine {
     }
 
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
-        /*for(BoardState b : possibleMoves){
-            System.out.println("Children");
-            System.out.println(b.printBoard(board));
-        }*/
         if (searchType == Util.random) {
             int totalHueristic = 0;
             ArrayList<BoardState> boardStates = Util.getArrayBoardState();
@@ -624,11 +622,11 @@ public class GameEngine {
         while (true) {
             state = nextBoardState(state, depth, searchType);
             if (state == null) {
+                Util.recycle(depth);
                 return null;
             }
-            //System.out.println("Pick");
-            //System.out.println(state.printBoard(board));
             if (isGoalState(state)) {
+                Util.recycle(depth);
                 return state;
             }
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
@@ -651,7 +649,7 @@ public class GameEngine {
             iterState = iterState.parent;
         }
         if (fullCleanUp) {
-            cleanUpAll();
+            cleanUpAll(true);
         } else {
             cleanUpReset();
         }
@@ -893,14 +891,6 @@ public class GameEngine {
 
     public void cleanUpReset() {
         seenStates.remove(root);
-        for (BoardState b : pq) {
-            seenStates.remove(b);
-            Util.recycle(b);
-        }
-        for (BoardState b : pqH) {
-            seenStates.remove(b);
-            Util.recycle(b);
-        }
         for (BoardState b : seenStates.keySet()) {
             Util.recycle(b);
         }
@@ -909,7 +899,10 @@ public class GameEngine {
         pqH.clear();
     }
 
-    public void cleanUpAll() {
+    public void cleanUpAll(boolean printStateCount) {
+        if(printStateCount){
+            System.out.print(seenStates.size() + ",");
+        }
         cleanUpReset();
         for (Pair p : whiteSpaces) {
             Util.recycle(p);
@@ -923,6 +916,7 @@ public class GameEngine {
         for (DoublePair p : distances.keySet()) {
             Util.recycle(p);
         }
+        Util.recycle(root);
         distances.clear();
         whiteSpaces.clear();
         goalNodes.clear();

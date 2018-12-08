@@ -20,12 +20,14 @@ public class PlayGame {
         Collections.reverse(solution);
     }
 
-    private static void statLeak() {
+    public static void statLeak() {
         int countBP = Util.getCountBoardPool();
         int sizeBP = Util.getSizeBoardPool();
+        System.out.println(countBP - sizeBP);
 
         int countPP = Util.getCountPairPool();
         int sizePP = Util.getSizePairPool();
+        System.out.println(countPP - sizePP);
 
         int countABSP = Util.getCountArrayBoardStatePool();
         int sizeABSP = Util.getSizeArrayBoardStatePool();
@@ -57,7 +59,7 @@ public class PlayGame {
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = Util.getArrayByte();
-        engine.findSolution(solution, Util.bfs, Util.hBoxesOnGoal, Util.hRealCost, true);
+        engine.findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hRealCost, true);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -86,22 +88,31 @@ public class PlayGame {
                 continue;
             }
             if (line.contains(";")) {
-                System.out.println(line);
-                GameEngine engine = new GameEngine();
-                engine.initFull(inputMap);
-                ArrayList<Byte> solution = Util.getArrayByte();
-                engine.findSolution(solution, Util.bfs, Util.hMoveCost, Util.hManhattan, true);
-                System.out.println(solution.size());
-                printSolution(solution);
-                System.out.println(checkSolution(engine, solution, inputMap) + "\n\n");
-                engine.cleanUpAll();
-                Util.recycleAB(solution);
-                statLeak();
+                for(int i = 0; i < 1; i++){
+                    long lStartTime = System.currentTimeMillis();
+
+                    System.out.print(line.substring(1) + ",");
+                    GameEngine engine = new GameEngine();
+                    engine.initFull(inputMap);
+                    ArrayList<Byte> solution = Util.getArrayByte();
+                    engine.findSolution(solution, Util.bfs, Util.hMoveCost, Util.hManhattan, true);
+
+                    long lEndTime = System.currentTimeMillis();
+                    long output = lEndTime - lStartTime;
+
+                    System.out.print(output + ",");
+
+                    System.out.println(checkSolution(engine, solution, inputMap));
+
+                    engine.cleanUpAll(false);
+                    Util.recycleAB(solution);
+                }
                 inputMap.clear();
             } else {
                 inputMap.add(line);
             }
         }
+        statLeak();
     }
 
     public static void main(String args[]) throws FileNotFoundException {
