@@ -86,14 +86,14 @@ public class PlayGame {
                 continue;
             }
             if (line.contains(";")) {
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < 3; i++) {
                     long lStartTime = System.currentTimeMillis();
 
                     System.out.print(line.substring(1) + ",");
                     GameEngine engine = new GameEngine();
                     engine.initFull(inputMap);
                     ArrayList<Byte> solution = Util.getArrayByte();
-                    engine.findSolution(solution, Util.bfs, Util.hMinMatching, Util.hRealCost, true);
+                    engine.findSolution(solution, Util.random, Util.hMinMatching, Util.hManhattan, true);
 
                     long lEndTime = System.currentTimeMillis();
                     long output = lEndTime - lStartTime;

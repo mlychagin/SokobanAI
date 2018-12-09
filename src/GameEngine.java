@@ -532,17 +532,16 @@ public class GameEngine {
     public BoardState parseMoves(ArrayList<BoardState> possibleMoves, int searchType, int heuristic, int distanceType) {
         if (searchType == Util.randomH || searchType == Util.random) {
             int totalHueristic = 0;
-            ArrayList<BoardState> boardStates = Util.getArrayBoardState();
             for (BoardState boardState : possibleMoves) {
                 boardState.hueristicValue = searchType == Util.random ? 1 : calculateHueristic(boardState, heuristic, distanceType);
                 totalHueristic += boardState.hueristicValue;
             }
             int solution = rnd.nextInt(totalHueristic + 1);
-            for (BoardState boardState : boardStates) {
+            for (BoardState boardState : possibleMoves) {
                 solution -= boardState.hueristicValue;
                 if (solution <= 0) {
-                    boardStates.remove(boardState);
-                    for (BoardState removeBS : boardStates) {
+                    possibleMoves.remove(boardState);
+                    for (BoardState removeBS : possibleMoves) {
                         Util.recycle(removeBS);
                     }
                     return boardState;
@@ -575,6 +574,7 @@ public class GameEngine {
     }
 
     public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
+        if(searchType == Util.random) return state;
         if (searchType == Util.huerisitc && pqH.isEmpty()) return null;
         if (searchType != Util.huerisitc && pq.isEmpty()) return null;
         switch (searchType) {
@@ -597,8 +597,6 @@ public class GameEngine {
                 }
             case Util.huerisitc:
                 return pqH.poll();
-            case Util.random:
-                return state;
             default:
                 System.out.println("Invalid searchType");
         }
