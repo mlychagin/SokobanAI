@@ -717,7 +717,7 @@ public class GameEngine {
                 counter++;
             }
         }
-        return counter;
+        return goalNodes.size() - counter;
     }
 
     public int hToAnyGoal(BoardState state, int type) {
