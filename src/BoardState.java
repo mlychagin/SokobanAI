@@ -67,25 +67,30 @@ public class BoardState implements Comparable<BoardState> {
         }
     }
 
-    private void moveBoxCleanUp(ArrayList<ArrayList<Byte>> board, Pair startLocation, Pair endLocation, byte direction) {
+    private boolean moveBoxCleanUp(ArrayList<ArrayList<Byte>> board, Pair startLocation, Pair endLocation, byte direction) {
         updateBoxPosition(startLocation, endLocation);
         Util.setCoordinate(board, startLocation, Util.getCoordinate(board, startLocation) == Util.box ? Util.empty : Util.goal);
         Util.setCoordinate(board, endLocation, Util.getCoordinate(board, endLocation) == Util.empty ? Util.box : Util.boxOnGoal);
         updatePlayerPositionAfterMoving(direction);
         if(GameEngine.tunneling){
-            moveBoxExtra(board, endLocation, direction);
+            return moveBoxExtra(board, endLocation, direction);
         }
+        return true;
     }
 
-    private void moveBoxExtra(ArrayList<ArrayList<Byte>> board, Pair startLocation, byte direction) {
+    private boolean moveBoxExtra(ArrayList<ArrayList<Byte>> board, Pair startLocation, byte direction) {
         Pair endLocation = Util.getPair(startLocation.getFirst() + Util.getOffsetRow(direction), startLocation.getSecond() + Util.getOffsetColumn(direction));
         byte endLocationValue = Util.getCoordinate(board, endLocation);
         if (endLocationValue == Util.wall || endLocationValue == Util.deadSquare || !Util.moveBoxExtraHelper(board, startLocation, endLocation, direction)) {
             Util.recycle(endLocation);
-            return;
+            return true;
+        }
+        if(endLocationValue == Util.box && Util.getCoordinate(board, startLocation) != Util.boxOnGoal){
+            return false;
         }
         moveBoxCleanUp(board, startLocation, endLocation, direction);
         Util.recycle(endLocation);
+        return true;
     }
 
     private boolean moveBox(ArrayList<ArrayList<Byte>> board, Pair startLocation, byte direction) {
@@ -95,9 +100,9 @@ public class BoardState implements Comparable<BoardState> {
             Util.recycle(endLocation);
             return false;
         }
-        moveBoxCleanUp(board, startLocation, endLocation, direction);
+        boolean retVal = moveBoxCleanUp(board, startLocation, endLocation, direction);
         Util.recycle(endLocation);
-        return true;
+        return retVal;
     }
 
     public PairPairByte move(ArrayList<ArrayList<Byte>> board, byte direction) {

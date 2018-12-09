@@ -93,7 +93,7 @@ public class PlayGame {
                     GameEngine engine = new GameEngine();
                     engine.initFull(inputMap);
                     ArrayList<Byte> solution = Util.getArrayByte();
-                    engine.findSolution(solution, Util.huerisitc, Util.hMinMatching, Util.hRealCost, true);
+                    engine.findSolution(solution, Util.bfs, Util.hMinMatching, Util.hRealCost, true);
 
                     long lEndTime = System.currentTimeMillis();
                     long output = lEndTime - lStartTime;
