@@ -86,26 +86,23 @@ public class PlayGame {
                 continue;
             }
             if (line.contains(";")) {
-                for (int i = 0; i < 3; i++) {
-                    long lStartTime = System.currentTimeMillis();
+                long lStartTime = System.currentTimeMillis();
 
-                    System.out.print(line.substring(1) + ",");
-                    GameEngine engine = new GameEngine();
-                    engine.initFull(inputMap);
-                    ArrayList<Byte> solution = Util.getArrayByte();
-                    engine.findSolution(solution, Util.ids, Util.hMinMatching, Util.hManhattan, true);
-                    //System.out.print(solution.size() + ",");
+                System.out.print(line.substring(1) + ",");
+                GameEngine engine = new GameEngine();
+                engine.initFull(inputMap);
+                ArrayList<Byte> solution = Util.getArrayByte();
+                engine.findSolution(solution, Util.ids, Util.hMinMatching, Util.hManhattan, true);
 
-                    long lEndTime = System.currentTimeMillis();
-                    long output = lEndTime - lStartTime;
+                long lEndTime = System.currentTimeMillis();
+                long output = lEndTime - lStartTime;
 
-                    System.out.print(output + ",");
+                System.out.print(output + ",");
 
-                    System.out.println(checkSolution(engine, solution, inputMap));
+                System.out.println(checkSolution(engine, solution, inputMap));
 
-                    engine.cleanUpAll(false, Util.huerisitc);
-                    Util.recycleAB(solution);
-                }
+                engine.cleanUpAll(Util.huerisitc);
+                Util.recycleAB(solution);
                 inputMap.clear();
             } else {
                 inputMap.add(line);

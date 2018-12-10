@@ -24,10 +24,6 @@ public class GameEngine {
     static boolean hminPruning = false;
     static boolean deadLockDetection = true;
 
-    LinkedList<BoardState> boardPool = Util.boardPool;
-    LinkedList<Pair> pairPool = Util.pairPool;
-    HashMap<Pair, Integer> goalNodesRead = goalNodes;
-
     public GameEngine() {
     }
 
@@ -136,10 +132,10 @@ public class GameEngine {
 
     public void preComputations() {
         if (deadLockDetection) {
-            //setDeadPositions();
-            //setWallPositionsOutside();
-            //setDeadPositionsAlgo();
-            //setDistances();
+            setDeadPositions();
+            setWallPositionsOutside();
+            setDeadPositionsAlgo();
+            setDistances();
             startPruning = true;
         }
     }
@@ -671,7 +667,7 @@ public class GameEngine {
             }
         }
         if (fullCleanUp) {
-            cleanUpAll(true, searchType);
+            cleanUpAll(searchType);
         } else {
             cleanUpReset();
         }
@@ -921,10 +917,7 @@ public class GameEngine {
         pqH.clear();
     }
 
-    public void cleanUpAll(boolean printStateCount, int searchType) {
-        if (printStateCount) {
-            System.out.print(seenStates.size() + ",");
-        }
+    public void cleanUpAll(int searchType) {
         cleanUpReset();
         for (Pair p : whiteSpaces) {
             Util.recycle(p);
