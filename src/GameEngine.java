@@ -26,6 +26,7 @@ public class GameEngine {
 
     LinkedList<BoardState> boardPool = Util.boardPool;
     LinkedList<Pair> pairPool = Util.pairPool;
+    HashMap<Pair, Integer> goalNodesRead = goalNodes;
 
     public GameEngine() {
     }
@@ -78,7 +79,6 @@ public class GameEngine {
 
     public void initFull(ArrayList<String> map) {
         initHelper(map);
-        ;
         preComputations();
     }
 
@@ -136,10 +136,10 @@ public class GameEngine {
 
     public void preComputations() {
         if (deadLockDetection) {
-            setDeadPositions();
-            setWallPositionsOutside();
-            setDeadPositionsAlgo();
-            setDistances();
+            //setDeadPositions();
+            //setWallPositionsOutside();
+            //setDeadPositionsAlgo();
+            //setDistances();
             startPruning = true;
         }
     }
@@ -544,10 +544,11 @@ public class GameEngine {
                     for (BoardState removeBS : possibleMoves) {
                         Util.recycle(removeBS);
                     }
+                    possibleMoves.clear();
                     return boardState;
                 }
             }
-            System.out.println("Impossible Random");
+            return null;
         }
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
@@ -574,7 +575,7 @@ public class GameEngine {
     }
 
     public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
-        if(searchType == Util.random) return state;
+        if(searchType == Util.random || searchType == Util.randomH) return state;
         if (searchType == Util.huerisitc && pqH.isEmpty()) return null;
         if (searchType != Util.huerisitc && pq.isEmpty()) return null;
         switch (searchType) {
@@ -614,6 +615,7 @@ public class GameEngine {
             case Util.huerisitc:
                 pqH.add(startingState);
                 break;
+            case Util.randomH:
             case Util.random:
                 seenStates.remove(startingState);
                 return startingState;
@@ -639,6 +641,15 @@ public class GameEngine {
             ArrayList<BoardState> possibleMoves = Util.getArrayBoardState();
             ArrayList<Zone> zones = new ArrayList<>();
             findPossibleBoxMoves(state, possibleMoves, null, zones, zoneDetection && startPruning ? Util.zoneChecking : Util.noZoneChecking);
+            if(searchType == Util.randomH || searchType == Util.random){
+                for(BoardState b : possibleMoves){
+                    b.movesFromParent.addAll(state.movesFromParent);
+                    b.parent = null;
+                }
+                if(state != root){
+                    Util.recycle(state);
+                }
+            }
             zones.clear();
             state = parseMoves(possibleMoves, searchType, heuristic, distanceType);
             Util.recycleABS(possibleMoves);
@@ -647,16 +658,20 @@ public class GameEngine {
 
     public boolean findSolution(ArrayList<Byte> returnMoves, int searchType, int heuristic, int distanceType, boolean fullCleanUp) {
         BoardState goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
-        while (searchType == Util.random && goalState == null) {
+        while ((searchType == Util.random || searchType == Util.randomH) && goalState == null) {
             goalState = findSolutionHelper(root, searchType, heuristic, distanceType);
         }
-        BoardState iterState = goalState;
-        while (iterState != null) {
-            returnMoves.addAll(iterState.movesFromParent);
-            iterState = iterState.parent;
+        if(searchType == Util.random || searchType == Util.randomH){
+            returnMoves.addAll(goalState.movesFromParent);
+        } else {
+            BoardState iterState = goalState;
+            while (iterState != null) {
+                returnMoves.addAll(iterState.movesFromParent);
+                iterState = iterState.parent;
+            }
         }
         if (fullCleanUp) {
-            cleanUpAll(true);
+            cleanUpAll(true, searchType);
         } else {
             cleanUpReset();
         }
@@ -906,7 +921,7 @@ public class GameEngine {
         pqH.clear();
     }
 
-    public void cleanUpAll(boolean printStateCount) {
+    public void cleanUpAll(boolean printStateCount, int searchType) {
         if (printStateCount) {
             System.out.print(seenStates.size() + ",");
         }
@@ -923,7 +938,9 @@ public class GameEngine {
         for (DoublePair p : distances.keySet()) {
             Util.recycle(p);
         }
-        Util.recycle(root);
+        if(!(searchType == Util.random || searchType == Util.randomH)){
+            Util.recycle(root);
+        }
         distances.clear();
         whiteSpaces.clear();
         goalNodes.clear();

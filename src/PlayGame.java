@@ -93,7 +93,8 @@ public class PlayGame {
                     GameEngine engine = new GameEngine();
                     engine.initFull(inputMap);
                     ArrayList<Byte> solution = Util.getArrayByte();
-                    engine.findSolution(solution, Util.random, Util.hMinMatching, Util.hManhattan, true);
+                    engine.findSolution(solution, Util.randomH, Util.hMoveCost, Util.hManhattan, true);
+                    //System.out.print(solution.size() + ",");
 
                     long lEndTime = System.currentTimeMillis();
                     long output = lEndTime - lStartTime;
@@ -102,7 +103,7 @@ public class PlayGame {
 
                     System.out.println(checkSolution(engine, solution, inputMap));
 
-                    engine.cleanUpAll(false);
+                    engine.cleanUpAll(false, Util.huerisitc);
                     Util.recycleAB(solution);
                 }
                 inputMap.clear();
