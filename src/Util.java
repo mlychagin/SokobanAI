@@ -33,7 +33,7 @@ public class Util {
     public static final int bfs = 100;
     public static final int dfs = 101;
     public static final int ids = 102;
-    public static final int huerisitc = 103;
+    public static final int heuristic = 103;
     public static final int random = 104;
     public static final int randomH = 105;
 

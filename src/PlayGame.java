@@ -57,7 +57,8 @@ public class PlayGame {
         engine.setGoals(inFile.nextLine());
         engine.setSokoban(inFile.nextLine());
         ArrayList<Byte> solution = Util.getArrayByte();
-        engine.findSolution(solution, Util.bfs, Util.hMoveCost, Util.hManhattan, true);
+        engine.findSolution(solution, Util.ids, Util.hMinMatching, Util.hManhattan, true);
+        engine.cleanUpAll(Util.heuristic);
         printSolution(solution);
         Util.recycleAB(solution);
         statLeak();
@@ -101,7 +102,7 @@ public class PlayGame {
 
                 System.out.println(checkSolution(engine, solution, inputMap));
 
-                engine.cleanUpAll(Util.huerisitc);
+                engine.cleanUpAll(Util.heuristic);
                 Util.recycleAB(solution);
                 inputMap.clear();
             } else {

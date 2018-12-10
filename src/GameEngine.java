@@ -297,7 +297,7 @@ public class GameEngine {
                                 goalDistances.add(Util.maxValueInt);
                             }
                             ArrayList<Byte> solution = Util.getArrayByte();
-                            boolean valid = findSolution(solution, Util.huerisitc, Util.hMoveCost, Util.hManhattan, false);
+                            boolean valid = findSolution(solution, Util.heuristic, Util.hMoveCost, Util.hManhattan, false);
                             goalDistances.set(goal.getValue(), valid ? solution.size() : Util.maxValueInt);
                             Util.recycleAB(solution);
                             goalNodes.clear();
@@ -548,7 +548,7 @@ public class GameEngine {
         }
         for (BoardState move : possibleMoves) {
             if (!seenStates.containsKey(move)) {
-                if (searchType == Util.huerisitc) {
+                if (searchType == Util.heuristic) {
                     move.hueristicValue = calculateHueristic(move, heuristic, distanceType);
                     pqH.add(move);
                 } else {
@@ -572,8 +572,8 @@ public class GameEngine {
 
     public BoardState nextBoardState(BoardState state, Pair depth, int searchType) {
         if(searchType == Util.random || searchType == Util.randomH) return state;
-        if (searchType == Util.huerisitc && pqH.isEmpty()) return null;
-        if (searchType != Util.huerisitc && pq.isEmpty()) return null;
+        if (searchType == Util.heuristic && pqH.isEmpty()) return null;
+        if (searchType != Util.heuristic && pq.isEmpty()) return null;
         switch (searchType) {
             case Util.bfs:
                 return pq.removeFirst();
@@ -592,7 +592,7 @@ public class GameEngine {
                     return pq.removeLast();
 
                 }
-            case Util.huerisitc:
+            case Util.heuristic:
                 return pqH.poll();
             default:
                 System.out.println("Invalid searchType");
@@ -608,7 +608,7 @@ public class GameEngine {
             case Util.ids:
                 pq.add(startingState);
                 break;
-            case Util.huerisitc:
+            case Util.heuristic:
                 pqH.add(startingState);
                 break;
             case Util.randomH:
